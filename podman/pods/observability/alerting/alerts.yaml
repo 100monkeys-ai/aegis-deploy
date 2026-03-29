@@ -1,0 +1,107 @@
+groups:
+  - name: aegis-critical
+    rules:
+      - alert: AEGISRuntimeDown
+        expr: up{job="aegis-runtime"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "AEGIS Runtime is down"
+          description: "The AEGIS core runtime has been unreachable for more than 1 minute."
+
+      - alert: PostgreSQLDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is unreachable"
+          description: "The PostgreSQL database has been unreachable for more than 1 minute."
+
+      - alert: TemporalDown
+        expr: up{job="temporal"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Temporal server is unreachable"
+          description: "The Temporal workflow engine has been unreachable for more than 2 minutes."
+
+      - alert: KeycloakDown
+        expr: up{job="keycloak"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Keycloak IAM is unreachable"
+          description: "The Keycloak identity provider has been unreachable for more than 2 minutes."
+
+  - name: aegis-warnings
+    rules:
+      - alert: HighExecutionFailureRate
+        expr: >
+          (rate(aegis_executions_total{status="failed"}[5m])
+          / rate(aegis_executions_total[5m])) > 0.25
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than 25% of executions are failing"
+          description: "Execution failure rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      - alert: HighHTTPErrorRate
+        expr: >
+          (rate(aegis_http_requests_total{status_code=~"5.."}[5m])
+          / rate(aegis_http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "HTTP 5xx error rate exceeds 5%"
+          description: "HTTP server error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      - alert: HighAPILatency
+        expr: histogram_quantile(0.95, rate(aegis_http_request_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 API latency exceeds 5 seconds"
+          description: "The 95th percentile API latency is {{ $value }}s."
+
+      - alert: EventBusLagHigh
+        expr: rate(aegis_event_bus_receiver_lag_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Event bus receiver lag is growing rapidly"
+          description: "Event bus lag rate is {{ $value }} events/s dropped."
+
+      - alert: SeaweedFSDown
+        expr: up{job=~"seaweedfs.*"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SeaweedFS component is unreachable"
+          description: "{{ $labels.job }} has been unreachable for more than 2 minutes."
+
+      - alert: OpenBaoDown
+        expr: up{job="openbao"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "OpenBao secrets manager is unreachable"
+          description: "OpenBao has been unreachable for more than 2 minutes."
+
+      - alert: HighPostgresConnections
+        expr: pg_stat_activity_count > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL connection count is high"
+          description: "There are {{ $value }} active PostgreSQL connections."

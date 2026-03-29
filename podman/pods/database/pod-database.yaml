@@ -1,0 +1,59 @@
+# AEGIS Database Pod — PostgreSQL + Prometheus Exporter
+# Optional: deploy when a managed database is not available
+apiVersion: v1
+kind: Pod
+metadata:
+  name: aegis-database
+  labels:
+    app: aegis
+    context: database
+spec:
+  containers:
+    - name: postgres
+      image: docker.io/postgres:15-alpine
+      env:
+        - name: POSTGRES_USER
+          value: "${POSTGRES_USER}"
+        - name: POSTGRES_PASSWORD
+          value: "${POSTGRES_PASSWORD}"
+        - name: POSTGRES_DB
+          value: "aegis"
+        - name: POSTGRES_HOST_AUTH_METHOD
+          value: "scram-sha-256"
+      ports:
+        - containerPort: 5432
+          hostPort: 5432
+      volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d/init-multiple-dbs.sh
+      readinessProbe:
+        exec:
+          command: ["pg_isready", "-U", "aegis"]
+        initialDelaySeconds: 5
+        periodSeconds: 10
+
+    - name: postgres-exporter
+      image: docker.io/prometheuscommunity/postgres-exporter:v0.19.1
+      env:
+        - name: DATA_SOURCE_NAME
+          value: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/aegis?sslmode=disable"
+      ports:
+        - containerPort: 9187
+          hostPort: 9187
+      readinessProbe:
+        httpGet:
+          path: /metrics
+          port: 9187
+        initialDelaySeconds: 10
+        periodSeconds: 10
+
+  volumes:
+    - name: postgres-data
+      persistentVolumeClaim:
+        claimName: aegis-postgres-data
+    - name: init-scripts
+      hostPath:
+        path: ./scripts/init-multiple-dbs.sh
+        type: File

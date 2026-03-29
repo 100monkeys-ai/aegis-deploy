@@ -1,0 +1,96 @@
+# AEGIS Temporal Pod — Workflow Engine
+# Bounded Context: Workflow Orchestration
+apiVersion: v1
+kind: Pod
+metadata:
+  name: aegis-temporal
+  labels:
+    app: aegis
+    context: temporal
+spec:
+  containers:
+    # --- Temporal Server ---
+    - name: temporal
+      image: docker.io/temporalio/auto-setup:1.23.0
+      env:
+        - name: DB
+          value: postgresql
+        - name: DB_PORT
+          value: "5432"
+        - name: POSTGRES_USER
+          value: "${POSTGRES_USER}"
+        - name: POSTGRES_PWD
+          value: "${POSTGRES_PASSWORD}"
+        - name: POSTGRES_SEEDS
+          value: "${AEGIS_DB_HOST}"
+        - name: DYNAMIC_CONFIG_FILE_PATH
+          value: config/dynamicconfig/development-sql.yaml
+        - name: ENABLE_ES
+          value: "false"
+      ports:
+        - containerPort: 7233
+          hostPort: 7233
+      volumeMounts:
+        - name: temporal-config
+          mountPath: /etc/temporal/config/dynamicconfig/development-sql.yaml
+      readinessProbe:
+        exec:
+          command: ["temporal", "operator", "cluster", "health"]
+        initialDelaySeconds: 15
+        periodSeconds: 10
+
+    # --- Temporal Web UI ---
+    - name: temporal-ui
+      image: docker.io/temporalio/ui:2.21.3
+      env:
+        - name: TEMPORAL_ADDRESS
+          value: "aegis-temporal:7233"
+        - name: TEMPORAL_CORS_ORIGINS
+          value: "http://localhost:3000"
+      ports:
+        - containerPort: 8080
+          hostPort: 8233
+      readinessProbe:
+        httpGet:
+          path: /
+          port: 8080
+        initialDelaySeconds: 10
+        periodSeconds: 10
+
+    # --- Temporal Worker ---
+    - name: temporal-worker
+      image: "ghcr.io/100monkeys-ai/aegis-temporal-worker:${AEGIS_IMAGE_TAG}"
+      env:
+        - name: TEMPORAL_ADDRESS
+          value: "aegis-temporal:7233"
+        - name: TEMPORAL_NAMESPACE
+          value: default
+        - name: TEMPORAL_TASK_QUEUE
+          value: aegis-agents
+        - name: DATABASE_URL
+          value: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${AEGIS_DB_HOST}:5432/aegis"
+        - name: AEGIS_RUNTIME_GRPC_URL
+          value: "aegis-core:50051"
+        - name: AEGIS_ORCHESTRATOR_URL
+          value: "http://aegis-core:8088"
+        - name: NODE_ENV
+          value: production
+        - name: LOG_LEVEL
+          value: info
+      volumeMounts:
+        - name: temporal-worker-data
+          mountPath: /app/data
+      readinessProbe:
+        tcpSocket:
+          port: 7233
+        initialDelaySeconds: 15
+        periodSeconds: 15
+
+  volumes:
+    - name: temporal-config
+      hostPath:
+        path: ${AEGIS_ROOT}/podman/pods/temporal/development-sql.yaml
+        type: File
+    - name: temporal-worker-data
+      persistentVolumeClaim:
+        claimName: aegis-temporal-worker-data

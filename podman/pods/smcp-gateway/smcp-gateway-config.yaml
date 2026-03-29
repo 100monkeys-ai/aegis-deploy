@@ -1,0 +1,38 @@
+# SMCP Tooling Gateway Configuration
+
+apiVersion: smcp.100monkeys.ai/v1
+kind: SmcpGatewayConfig
+
+metadata:
+  name: aegis-smcp-gateway
+  version: "1.0.0"
+
+spec:
+  network:
+    bind_addr: "0.0.0.0:8089"
+    grpc_bind_addr: "0.0.0.0:50055"
+
+  database:
+    url: "sqlite:///app/data/gateway.db"
+
+  auth:
+    disabled: true
+    operator_jwt_public_key_pem: ""
+    operator_jwt_issuer: "aegis-keycloak"
+    operator_jwt_audience: "aegis-smcp-gateway"
+    smcp_jwt_public_key_pem: ""
+    smcp_jwt_issuer: "aegis-orchestrator"
+    smcp_jwt_audience: "aegis-agents"
+
+  credentials:
+    openbao_addr: "http://aegis-secrets:8200"
+    openbao_kv_mount: "secret"
+
+  cli:
+    container_cli: "podman"
+    nfs_server_host: "host.containers.internal"
+    nfs_server_port: 2049
+    nfs_mount_port: 20048
+
+  ui:
+    enabled: true

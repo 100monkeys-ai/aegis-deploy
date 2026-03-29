@@ -1,0 +1,95 @@
+# AEGIS Core Pod — AEGIS Runtime
+# Bounded Context: Agent Lifecycle, Execution, Infrastructure
+apiVersion: v1
+kind: Pod
+metadata:
+  name: aegis-core
+  labels:
+    app: aegis
+    context: core
+spec:
+  containers:
+    # --- AEGIS Runtime ---
+    - name: aegis-runtime
+      image: "ghcr.io/100monkeys-ai/aegis-runtime:${AEGIS_IMAGE_TAG}"
+      env:
+        - name: RUST_LOG
+          value: "${RUST_LOG}"
+        - name: AEGIS_CONFIG_PATH
+          value: /app/aegis-config.yaml
+        - name: AEGIS_DATABASE_URL
+          value: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${AEGIS_DB_HOST}:5432/aegis"
+        - name: AEGIS_CONTAINER_NETWORK
+          value: "${AEGIS_CONTAINER_NETWORK}"
+        - name: AEGIS_ORCHESTRATOR_URL
+          value: "${AEGIS_ORCHESTRATOR_URL}"
+        - name: AEGIS_KEEP_CONTAINER
+          value: "${AEGIS_KEEP_CONTAINER}"
+        - name: AEGIS_SMCP_PRIVATE_KEY
+          value: "${AEGIS_SMCP_PRIVATE_KEY}"
+        - name: AEGIS_LOCAL_HOST_MOUNT_POINT
+          value: /tmp/aegis-volumes
+        - name: LLM_API_KEY
+          value: "${LLM_API_KEY}"
+        - name: OPENBAO_ROLE_ID
+          value: "${OPENBAO_ROLE_ID}"
+        - name: OPENBAO_SECRET_ID
+          value: "${OPENBAO_SECRET_ID}"
+        - name: AEGIS_OTLP_ENDPOINT
+          value: "${AEGIS_OTLP_ENDPOINT}"
+        - name: AEGIS_CLUSTER_PORT
+          value: "${AEGIS_CLUSTER_PORT}"
+        - name: CONTAINER_HOST
+          value: "unix:///run/podman/podman.sock"
+        - name: DOCKER_HOST
+          value: "unix:///run/podman/podman.sock"
+      ports:
+        - containerPort: 8088
+          hostPort: 8088
+        - containerPort: 50051
+          hostPort: 50051
+        - containerPort: 2049
+          hostPort: 2049
+      volumeMounts:
+        - name: container-sock
+          mountPath: /run/podman/podman.sock
+        - name: aegis-config
+          mountPath: /app/aegis-config.yaml
+        - name: runtime-registry
+          mountPath: /app/runtime-registry.yaml
+        - name: aegis-runtime-data
+          mountPath: /app/data
+        - name: aegis-home
+          mountPath: /root/.aegis
+        - name: local-volumes
+          mountPath: /tmp/aegis-volumes
+      readinessProbe:
+        httpGet:
+          path: /health
+          port: 8088
+        initialDelaySeconds: 10
+        periodSeconds: 10
+
+  volumes:
+    - name: container-sock
+      hostPath:
+        path: "${CONTAINER_SOCK}"
+        type: Socket
+    - name: aegis-config
+      hostPath:
+        path: ./podman/pods/core/aegis-config.yaml
+        type: File
+    - name: runtime-registry
+      hostPath:
+        path: ./podman/pods/core/runtime-registry.yaml
+        type: File
+    - name: aegis-runtime-data
+      persistentVolumeClaim:
+        claimName: aegis-runtime-data
+    - name: aegis-home
+      persistentVolumeClaim:
+        claimName: aegis-home-data
+    - name: local-volumes
+      hostPath:
+        path: ./local-volumes
+        type: DirectoryOrCreate

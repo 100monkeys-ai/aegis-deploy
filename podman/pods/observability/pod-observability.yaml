@@ -1,0 +1,166 @@
+# AEGIS Observability Pod — Jaeger, Prometheus, Grafana, Loki, Promtail
+# Bounded Context: Observability & Telemetry
+apiVersion: v1
+kind: Pod
+metadata:
+  name: aegis-observability
+  labels:
+    app: aegis
+    context: observability
+spec:
+  containers:
+    - name: jaeger
+      image: docker.io/jaegertracing/all-in-one:1.55
+      env:
+        - name: COLLECTOR_OTLP_ENABLED
+          value: "true"
+      ports:
+        - containerPort: 16686
+          hostPort: 16686
+        - containerPort: 4317
+          hostPort: 4317
+        - containerPort: 4318
+          hostPort: 4318
+      readinessProbe:
+        httpGet:
+          path: /
+          port: 16686
+        initialDelaySeconds: 10
+        periodSeconds: 10
+
+    - name: prometheus
+      image: docker.io/prom/prometheus:v2.51.0
+      args:
+        - '--config.file=/etc/prometheus/prometheus.yml'
+        - '--storage.tsdb.path=/prometheus'
+        - '--storage.tsdb.retention.time=15d'
+        - '--web.enable-lifecycle'
+      ports:
+        - containerPort: 9090
+          hostPort: 9090
+      volumeMounts:
+        - name: prometheus-config
+          mountPath: /etc/prometheus/prometheus.yml
+        - name: prometheus-alerts
+          mountPath: /etc/prometheus/alerts
+        - name: prometheus-data
+          mountPath: /prometheus
+      readinessProbe:
+        httpGet:
+          path: /-/ready
+          port: 9090
+        initialDelaySeconds: 10
+        periodSeconds: 10
+
+    - name: grafana
+      image: docker.io/grafana/grafana:10.4.0
+      env:
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          value: "${GRAFANA_ADMIN_PASSWORD}"
+        - name: GF_USERS_ALLOW_SIGN_UP
+          value: "false"
+        - name: GF_AUTH_ANONYMOUS_ENABLED
+          value: "true"
+        - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+          value: "Viewer"
+      ports:
+        - containerPort: 3000
+          hostPort: 3300
+      volumeMounts:
+        - name: grafana-datasources
+          mountPath: /etc/grafana/provisioning/datasources
+        - name: grafana-dashboard-provider
+          mountPath: /etc/grafana/provisioning/dashboards
+        - name: grafana-dashboards
+          mountPath: /var/lib/grafana/dashboards
+        - name: grafana-data
+          mountPath: /var/lib/grafana
+      readinessProbe:
+        httpGet:
+          path: /api/health
+          port: 3000
+        initialDelaySeconds: 10
+        periodSeconds: 10
+
+    - name: loki
+      image: docker.io/grafana/loki:3.0.0
+      args:
+        - '-config.file=/etc/loki/local-config.yaml'
+      ports:
+        - containerPort: 3100
+          hostPort: 3100
+      volumeMounts:
+        - name: loki-config
+          mountPath: /etc/loki/local-config.yaml
+        - name: loki-data
+          mountPath: /loki
+      readinessProbe:
+        httpGet:
+          path: /ready
+          port: 3100
+        initialDelaySeconds: 15
+        periodSeconds: 10
+
+    - name: promtail
+      image: docker.io/grafana/promtail:3.0.0
+      args:
+        - '-config.file=/etc/promtail/config.yml'
+      volumeMounts:
+        - name: promtail-config
+          mountPath: /etc/promtail/config.yml
+        - name: podman-logs
+          mountPath: /var/log/podman-containers
+          readOnly: true
+      readinessProbe:
+        httpGet:
+          path: /ready
+          port: 9080
+        initialDelaySeconds: 5
+        periodSeconds: 10
+
+  volumes:
+    # Prometheus
+    - name: prometheus-config
+      hostPath:
+        path: ./podman/pods/observability/prometheus.yaml
+        type: File
+    - name: prometheus-alerts
+      hostPath:
+        path: ./podman/pods/observability/alerting
+        type: Directory
+    - name: prometheus-data
+      persistentVolumeClaim:
+        claimName: aegis-prometheus-data
+    # Grafana
+    - name: grafana-datasources
+      hostPath:
+        path: ./podman/pods/observability/grafana/provisioning/datasources
+        type: Directory
+    - name: grafana-dashboard-provider
+      hostPath:
+        path: ./podman/pods/observability/grafana/provisioning/dashboards
+        type: Directory
+    - name: grafana-dashboards
+      hostPath:
+        path: ./podman/pods/observability/grafana/dashboards
+        type: Directory
+    - name: grafana-data
+      persistentVolumeClaim:
+        claimName: aegis-grafana-data
+    # Loki
+    - name: loki-config
+      hostPath:
+        path: ./podman/pods/observability/loki-config.yaml
+        type: File
+    - name: loki-data
+      persistentVolumeClaim:
+        claimName: aegis-loki-data
+    # Promtail
+    - name: promtail-config
+      hostPath:
+        path: ./podman/pods/observability/promtail-config.yaml
+        type: File
+    - name: podman-logs
+      hostPath:
+        path: "${PODMAN_LOG_ROOT}"
+        type: Directory

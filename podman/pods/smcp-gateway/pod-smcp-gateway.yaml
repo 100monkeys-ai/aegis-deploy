@@ -1,0 +1,61 @@
+# AEGIS SMCP Gateway Pod
+# Bounded Context: SMCP Tooling Gateway
+apiVersion: v1
+kind: Pod
+metadata:
+  name: aegis-smcp-gateway
+  labels:
+    app: aegis
+    context: smcp-gateway
+spec:
+  containers:
+    - name: smcp-gateway
+      image: "ghcr.io/100monkeys-ai/aegis-smcp-gateway:${AEGIS_IMAGE_TAG}"
+      env:
+        - name: RUST_LOG
+          value: info
+        - name: SMCP_GATEWAY_BIND
+          value: "0.0.0.0:8089"
+        - name: SMCP_GATEWAY_GRPC_BIND
+          value: "0.0.0.0:50055"
+        - name: SMCP_GATEWAY_DB
+          value: "sqlite:///app/data/gateway.db"
+        - name: SMCP_GATEWAY_AUTH_DISABLED
+          value: "true"
+        - name: SMCP_GATEWAY_NFS_HOST
+          value: "${AEGIS_NFS_HOST}"
+        - name: SMCP_GATEWAY_CONTAINER_CLI
+          value: "podman"
+        - name: CONTAINER_HOST
+          value: "unix:///run/podman/podman.sock"
+      ports:
+        - containerPort: 8089
+          hostPort: 8089
+        - containerPort: 50055
+          hostPort: 50055
+      volumeMounts:
+        - name: smcp-gateway-data
+          mountPath: /app/data
+        - name: smcp-gateway-config
+          mountPath: /etc/aegis/smcp-gateway-config.yaml
+        - name: podman-socket
+          mountPath: /run/podman/podman.sock
+      readinessProbe:
+        httpGet:
+          path: /
+          port: 8089
+        initialDelaySeconds: 10
+        periodSeconds: 10
+
+  volumes:
+    - name: smcp-gateway-data
+      persistentVolumeClaim:
+        claimName: aegis-smcp-gateway-data
+    - name: smcp-gateway-config
+      hostPath:
+        path: ${AEGIS_ROOT}/podman/pods/smcp-gateway/smcp-gateway-config.yaml
+        type: File
+    - name: podman-socket
+      hostPath:
+        path: ${CONTAINER_SOCK}
+        type: Socket

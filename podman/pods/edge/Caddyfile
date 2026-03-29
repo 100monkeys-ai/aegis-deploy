@@ -1,0 +1,35 @@
+{
+	acme_dns cloudflare {$CLOUDFLARE_API_TOKEN}
+}
+
+{$DOMAIN_KEYCLOAK:auth.localhost} {
+    reverse_proxy aegis-iam:8180
+}
+
+{$DOMAIN_SMCP:smcp.localhost} {
+    reverse_proxy aegis-smcp-gateway:8089
+}
+
+{$DOMAIN_TEMPORAL:temporal.localhost} {
+    reverse_proxy aegis-temporal:8233
+}
+
+{$DOMAIN_JAEGER:jaeger.localhost} {
+    reverse_proxy aegis-observability:16686
+}
+
+{$DOMAIN_SECRETS:secrets.localhost} {
+    reverse_proxy aegis-secrets:8200
+}
+
+{$DOMAIN_API:api.localhost} {
+    reverse_proxy aegis-core:8088
+}
+
+{$DOMAIN_GRAFANA:grafana.localhost} {
+    reverse_proxy aegis-observability:3300
+}
+
+{$DOMAIN_PROMETHEUS:prometheus.localhost} {
+    reverse_proxy aegis-observability:9090
+}

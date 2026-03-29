@@ -1,0 +1,99 @@
+# AEGIS Storage Pod — SeaweedFS Cluster
+# Bounded Context: Storage Gateway
+apiVersion: v1
+kind: Pod
+metadata:
+  name: aegis-storage
+  labels:
+    app: aegis
+    context: storage
+spec:
+  containers:
+    # --- SeaweedFS Master ---
+    - name: seaweedfs-master
+      image: docker.io/chrislusf/seaweedfs:latest
+      args: ["master", "-ip=localhost", "-ip.bind=0.0.0.0", "-metricsPort=9324"]
+      ports:
+        - containerPort: 9333
+          hostPort: 9333
+        - containerPort: 19333
+          hostPort: 19333
+        - containerPort: 9324
+          hostPort: 9324
+      volumeMounts:
+        - name: seaweedfs-master-data
+          mountPath: /data
+      readinessProbe:
+        httpGet:
+          path: /cluster/status
+          port: 9333
+        initialDelaySeconds: 5
+        periodSeconds: 10
+
+    # --- SeaweedFS Volume Server ---
+    - name: seaweedfs-volume
+      image: docker.io/chrislusf/seaweedfs:latest
+      args: ["volume", "-ip=localhost", "-master=localhost:9333", "-ip.bind=0.0.0.0", "-port=8080", "-metricsPort=9325"]
+      ports:
+        - containerPort: 8080
+          hostPort: 8080
+        - containerPort: 18080
+          hostPort: 18080
+        - containerPort: 9325
+          hostPort: 9325
+      volumeMounts:
+        - name: seaweedfs-volume-data
+          mountPath: /data
+      readinessProbe:
+        httpGet:
+          path: /status
+          port: 8080
+        initialDelaySeconds: 10
+        periodSeconds: 10
+
+    # --- SeaweedFS Filer ---
+    - name: seaweedfs-filer
+      image: docker.io/chrislusf/seaweedfs:latest
+      args: ["filer", "-ip=localhost", "-master=localhost:9333", "-ip.bind=0.0.0.0", "-metricsPort=9326"]
+      ports:
+        - containerPort: 8888
+          hostPort: 8888
+        - containerPort: 18888
+          hostPort: 18888
+        - containerPort: 9326
+          hostPort: 9326
+      volumeMounts:
+        - name: seaweedfs-filer-data
+          mountPath: /data
+      tty: true
+      stdin: true
+      readinessProbe:
+        httpGet:
+          path: /
+          port: 8888
+        initialDelaySeconds: 10
+        periodSeconds: 10
+
+    # --- SeaweedFS WebDAV ---
+    - name: seaweedfs-webdav
+      image: docker.io/chrislusf/seaweedfs:latest
+      args: ["webdav", "-filer=localhost:8888", "-ip.bind=0.0.0.0"]
+      ports:
+        - containerPort: 7333
+          hostPort: 7333
+      readinessProbe:
+        tcpSocket:
+          port: 7333
+        initialDelaySeconds: 10
+        periodSeconds: 10
+
+  volumes:
+    - name: seaweedfs-master-data
+      persistentVolumeClaim:
+        claimName: aegis-seaweedfs-master-data
+    - name: seaweedfs-volume-data
+      persistentVolumeClaim:
+        claimName: aegis-seaweedfs-volume-data
+    - name: seaweedfs-filer-data
+      persistentVolumeClaim:
+        claimName: aegis-seaweedfs-filer-data

@@ -1,0 +1,62 @@
+# AEGIS Edge Proxy Pod — Caddy
+# Bounded Context: Infrastructure & Hosting
+apiVersion: v1
+kind: Pod
+metadata:
+  name: aegis-edge
+  labels:
+    app: aegis
+    context: edge
+spec:
+  containers:
+    - name: caddy
+      image: ghcr.io/100monkeys-ai/caddy-cloudflare:latest
+      env:
+        - name: CLOUDFLARE_API_TOKEN
+          value: "${CLOUDFLARE_API_TOKEN}"
+        - name: DOMAIN_KEYCLOAK
+          value: "${DOMAIN_KEYCLOAK}"
+        - name: DOMAIN_SMCP
+          value: "${DOMAIN_SMCP}"
+        - name: DOMAIN_TEMPORAL
+          value: "${DOMAIN_TEMPORAL}"
+        - name: DOMAIN_JAEGER
+          value: "${DOMAIN_JAEGER}"
+        - name: DOMAIN_SECRETS
+          value: "${DOMAIN_SECRETS}"
+        - name: DOMAIN_API
+          value: "${DOMAIN_API}"
+        - name: DOMAIN_GRAFANA
+          value: "${DOMAIN_GRAFANA}"
+        - name: DOMAIN_PROMETHEUS
+          value: "${DOMAIN_PROMETHEUS}"
+      ports:
+        - containerPort: 80
+          hostPort: 80
+        - containerPort: 443
+          hostPort: 443
+      volumeMounts:
+        - name: caddyfile
+          mountPath: /etc/caddy/Caddyfile
+        - name: caddy-data
+          mountPath: /data
+        - name: caddy-config
+          mountPath: /config
+      readinessProbe:
+        httpGet:
+          path: /
+          port: 80
+        initialDelaySeconds: 5
+        periodSeconds: 10
+
+  volumes:
+    - name: caddyfile
+      hostPath:
+        path: ${AEGIS_ROOT}/podman/pods/edge/Caddyfile
+        type: File
+    - name: caddy-data
+      persistentVolumeClaim:
+        claimName: aegis-caddy-data
+    - name: caddy-config
+      persistentVolumeClaim:
+        claimName: aegis-caddy-config

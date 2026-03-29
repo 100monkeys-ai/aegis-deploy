@@ -1,0 +1,95 @@
+# AEGIS Runtime Configuration
+# See aegis-orchestrator/cli/templates/config-with-examples.yaml for all options
+
+apiVersion: 100monkeys.ai/v1
+kind: NodeConfig
+
+metadata:
+  name: "aegis-node-1"
+  version: "1.0.0"
+
+spec:
+  node:
+    id: "aegis-node-1"
+    type: "orchestrator"
+
+  llm_providers:
+    - name: gemini
+      type: gemini
+      endpoint: "https://generativelanguage.googleapis.com/v1beta"
+      api_key: "env:LLM_API_KEY"
+      enabled: true
+      models:
+        - alias: "default"
+          model: "gemini-2.5-flash"
+          capabilities: ["code", "reasoning"]
+          context_window: 1000000
+          cost_per_1k_tokens: 0.0001
+        - alias: "smart"
+          model: "gemini-2.5-pro"
+          capabilities: ["code", "reasoning"]
+          context_window: 1000000
+          cost_per_1k_tokens: 0.001
+        - alias: "judge"
+          model: "gemini-2.5-flash"
+          capabilities: ["reasoning"]
+          context_window: 1000000
+          cost_per_1k_tokens: 0.0001
+
+  llm_selection:
+    strategy: "prefer-cloud"
+    default_provider: "gemini"
+    max_retries: 3
+    retry_delay_ms: 1000
+
+  runtime:
+    container_socket_path: "/run/podman/podman.sock"
+    container_network_mode: "env:AEGIS_CONTAINER_NETWORK"
+    orchestrator_url: "env:AEGIS_ORCHESTRATOR_URL"
+    nfs_server_host: "env:AEGIS_NFS_HOST"
+    nfs_port: 2049
+
+  network:
+    bind_address: "0.0.0.0"
+    port: 8088
+
+  observability:
+    logging:
+      level: debug
+      format: json
+    metrics:
+      enabled: true
+      port: 9091
+    tracing:
+      enabled: true
+      otlp_endpoint: "env:AEGIS_OTLP_ENDPOINT"
+
+  database:
+    url: "env:AEGIS_DATABASE_URL"
+
+  temporal:
+    address: "temporal:7233"
+    namespace: "default"
+    task_queue: "aegis-agents"
+    worker_http_endpoint: "http://aegis-temporal:3000"
+    max_connection_retries: 30
+
+  storage:
+    backend: "seaweedfs"
+    seaweedfs:
+      filer_url: "http://aegis-storage:8888"
+
+  security_contexts:
+    - name: "default"
+      description: "Unrestricted context for orchestrator-managed agent executions."
+      capabilities:
+        - tool_pattern: "*"
+      deny_list: []
+
+  secrets:
+    backend:
+      address: "http://aegis-secrets:8200"
+      auth_method: "approle"
+      approle:
+        role_id: "env:OPENBAO_ROLE_ID"
+        secret_id_env_var: "OPENBAO_SECRET_ID"

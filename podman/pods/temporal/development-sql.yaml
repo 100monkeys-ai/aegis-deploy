@@ -1,0 +1,25 @@
+# Temporal Server Dynamic Configuration (PostgreSQL backend)
+system.forceSearchAttributesCacheRefreshOnRead:
+  - value: true
+    constraints: {}
+frontend.enableClientVersionCheck:
+  - value: true
+    constraints: {}
+history.defaultActivityRetryPolicy:
+  - value:
+      InitialIntervalInSeconds: 1
+      MaximumIntervalInSeconds: 100
+      BackoffCoefficient: 2.0
+      MaximumAttempts: 0
+limit.maxIDLength:
+  - value: 255
+    constraints: {}
+limit.blobSize.error:
+  - value: 2097152
+    constraints: {}
+limit.blobSize.warn:
+  - value: 524288
+    constraints: {}
+system.enableNamespaceNotActiveAutoForwarding:
+  - value: true
+    constraints: {}
