@@ -79,6 +79,12 @@ spec:
     seaweedfs:
       filer_url: "http://aegis-storage:8888"
 
+  # discovery:                                # Enterprise-only (ADR-075)
+  #   qdrant_url: "http://aegis-cortex:6334"
+  #   embedding_url: "http://aegis-cortex:50054"
+  #   deduplication_threshold: 0.85
+  #   backfill_on_startup: true
+
   security_contexts:
     - name: "default"
       description: "Unrestricted context for orchestrator-managed agent executions."
@@ -101,12 +107,14 @@ spec:
         - tool_pattern: "aegis.schema.validate"
         - tool_pattern: "aegis.agent.create"
         - tool_pattern: "aegis.agent.list"
+        - tool_pattern: "aegis.agent.search"
         - tool_pattern: "aegis.agent.export"
         - tool_pattern: "aegis.agent.generate"
         - tool_pattern: "aegis.agent.update"
         - tool_pattern: "aegis.agent.logs"
         - tool_pattern: "aegis.workflow.create"
         - tool_pattern: "aegis.workflow.list"
+        - tool_pattern: "aegis.workflow.search"
         - tool_pattern: "aegis.workflow.export"
         - tool_pattern: "aegis.workflow.run"
         - tool_pattern: "aegis.workflow.generate"
