@@ -121,6 +121,7 @@ spec:
         - tool_pattern: "aegis.workflow.update"
         - tool_pattern: "aegis.workflow.logs"
         - tool_pattern: "aegis.workflow.cancel"
+        - tool_pattern: "aegis.workflow.wait"
         - tool_pattern: "aegis.workflow.signal"
         - tool_pattern: "aegis.task.execute"
         - tool_pattern: "aegis.task.status"
