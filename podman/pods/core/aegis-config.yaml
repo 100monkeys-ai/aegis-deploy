@@ -128,6 +128,8 @@ spec:
         - tool_pattern: "aegis.task.wait"
         - tool_pattern: "aegis.task.cancel"
         - tool_pattern: "aegis.task.logs"
+        - tool_pattern: "aegis.execute.intent"
+        - tool_pattern: "aegis.execute.status"
         - tool_pattern: "aegis.tools.list"
         - tool_pattern: "aegis.tools.search"
         # Destructive commands (operator-only)
