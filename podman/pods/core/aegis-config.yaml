@@ -112,6 +112,7 @@ spec:
         - tool_pattern: "aegis.agent.generate"
         - tool_pattern: "aegis.agent.update"
         - tool_pattern: "aegis.agent.logs"
+        - tool_pattern: "aegis.agent.wait"
         - tool_pattern: "aegis.workflow.create"
         - tool_pattern: "aegis.workflow.list"
         - tool_pattern: "aegis.workflow.search"
