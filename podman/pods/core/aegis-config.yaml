@@ -79,11 +79,9 @@ spec:
     seaweedfs:
       filer_url: "http://aegis-storage:8888"
 
-  # discovery:                                # Enterprise-only (ADR-075)
-  #   qdrant_url: "http://aegis-cortex:6334"
-  #   embedding_url: "http://aegis-cortex:50054"
-  #   deduplication_threshold: 0.85
-  #   backfill_on_startup: true
+  # cortex:
+  #   grpc_url: "http://aegis-cortex:50052"
+  #   api_key: "env:CORTEX_API_KEY"   # omit for self-hosted
 
   security_contexts:
     - name: "default"
