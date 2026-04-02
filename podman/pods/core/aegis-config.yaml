@@ -93,7 +93,7 @@ spec:
     # ── Operator Context ──────────────────────────────────────────────
     # Platform operators only. Authenticated via aegis-system realm.
     # Superset of enterprise tier plus destructive and orchestrator commands.
-    # Uses aegis-system- prefix (not zaru-) so SMCP middleware preserves
+    # Uses aegis-system- prefix (not zaru-) so SEAL middleware preserves
     # force/version parameters for operator tool invocations.
     - name: "aegis-system-operator"
       description: "Platform operator context. All safe, destructive, and orchestrator commands."

@@ -52,7 +52,7 @@ bootstrap-secrets:
 	@bash $(SCRIPTS)/bootstrap-openbao.sh
 
 generate-keys:
-	@bash $(SCRIPTS)/generate-smcp-keys.sh
+	@bash $(SCRIPTS)/generate-seal-keys.sh
 
 # ---- Redeploy single pod ----
 redeploy: registry-login

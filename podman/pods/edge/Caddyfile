@@ -6,8 +6,8 @@
     reverse_proxy aegis-iam:8180
 }
 
-{$DOMAIN_SMCP:smcp.localhost} {
-    reverse_proxy aegis-smcp-gateway:8089
+{$DOMAIN_SEAL:seal.localhost} {
+    reverse_proxy aegis-seal-gateway:8089
 }
 
 {$DOMAIN_TEMPORAL:temporal.localhost} {

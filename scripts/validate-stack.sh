@@ -28,7 +28,7 @@ check "Temporal Server" "http://localhost:7233"
 check "Temporal UI" "http://localhost:8233"
 
 echo "Gateways:"
-check "SMCP Gateway" "http://localhost:8089"
+check "SEAL Gateway" "http://localhost:8089"
 
 echo "IAM & Secrets:"
 check "Keycloak" "http://localhost:8180/health/ready"

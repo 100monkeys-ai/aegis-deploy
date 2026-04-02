@@ -25,8 +25,8 @@ spec:
           value: "${AEGIS_ORCHESTRATOR_URL}"
         - name: AEGIS_KEEP_CONTAINER
           value: "${AEGIS_KEEP_CONTAINER}"
-        - name: AEGIS_SMCP_PRIVATE_KEY
-          value: "${AEGIS_SMCP_PRIVATE_KEY}"
+        - name: AEGIS_SEAL_PRIVATE_KEY
+          value: "${AEGIS_SEAL_PRIVATE_KEY}"
         - name: AEGIS_LOCAL_HOST_MOUNT_POINT
           value: /tmp/aegis-volumes
         - name: LLM_API_KEY

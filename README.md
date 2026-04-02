@@ -26,8 +26,8 @@ Select a profile with `PROFILE=<name> make deploy`. Default: `development`.
 | Profile | Pods | Use Case |
 |---|---|---|
 | `minimal` | secrets, core | Local development with external DB |
-| `development` | database, secrets, core, temporal, smcp-gateway, iam, observability | Full local dev environment |
-| `full` | database, secrets, core, temporal, smcp-gateway, iam, observability, storage | Complete platform with SeaweedFS storage |
+| `development` | database, secrets, core, temporal, seal-gateway, iam, observability | Full local dev environment |
+| `full` | database, secrets, core, temporal, seal-gateway, iam, observability, storage | Complete platform with SeaweedFS storage |
 
 ## Pod Architecture
 
@@ -38,7 +38,7 @@ Select a profile with `PROFILE=<name> make deploy`. Default: `development`.
 | **pod-secrets** | OpenBao | 8200 |
 | **pod-temporal** | Temporal 1.23 (auto-setup), Temporal UI 2.21, aegis-temporal-worker | 7233 (gRPC), 8233 (UI) |
 | **pod-iam** | Keycloak 24 | 8180 |
-| **pod-smcp-gateway** | aegis-smcp-gateway | 8089 (HTTP), 50055 (gRPC) |
+| **pod-seal-gateway** | aegis-seal-gateway | 8089 (HTTP), 50055 (gRPC) |
 | **pod-observability** | Jaeger 1.55, Prometheus 2.51, Grafana 10.4, Loki 3.0, Promtail 3.0 | 16686 (Jaeger), 4317/4318 (OTLP), 9090 (Prometheus), 3300 (Grafana), 3100 (Loki) |
 | **pod-storage** | SeaweedFS (master, volume, filer, WebDAV) | 9333 (master), 8080 (volume), 8888 (filer), 7333 (WebDAV) |
 
@@ -52,7 +52,7 @@ The `pod-edge` directory contains a Caddy-based reverse proxy for production dep
 |---|---|---|
 | `DOMAIN_API` | `api.localhost` | aegis-core:8088 |
 | `DOMAIN_KEYCLOAK` | `auth.localhost` | aegis-iam:8180 |
-| `DOMAIN_SMCP` | `smcp.localhost` | aegis-smcp-gateway:8089 |
+| `DOMAIN_SEAL` | `seal.localhost` | aegis-seal-gateway:8089 |
 | `DOMAIN_TEMPORAL` | `temporal.localhost` | aegis-temporal:8233 |
 | `DOMAIN_GRAFANA` | `grafana.localhost` | aegis-observability:3300 |
 | `DOMAIN_PROMETHEUS` | `prometheus.localhost` | aegis-observability:9090 |
@@ -73,7 +73,7 @@ Ports: 80 (HTTP), 443 (HTTPS). Requires `CLOUDFLARE_API_TOKEN` in `.env`.
 | `make registry-login` | Authenticate to ghcr.io using `.env` credentials |
 | `make bootstrap-secrets` | Initialize OpenBao and populate AppRole credentials |
 | `make bootstrap-keycloak` | Configure Keycloak realm, clients, and roles |
-| `make generate-keys` | Generate SMCP RSA signing key pair |
+| `make generate-keys` | Generate SEAL RSA signing key pair |
 | `make redeploy POD=<name>` | Tear down and redeploy a single pod |
 | `make logs POD=<name>` | Tail logs for a specific pod |
 | `make clean` | Full teardown + prune volumes and networks |
