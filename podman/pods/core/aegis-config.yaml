@@ -132,6 +132,7 @@ spec:
         - tool_pattern: "aegis.execute.status"
         - tool_pattern: "aegis.tools.list"
         - tool_pattern: "aegis.tools.search"
+        - tool_pattern: "aegis.runtime.list"
         # Destructive commands (operator-only)
         - tool_pattern: "aegis.agent.delete"
         - tool_pattern: "aegis.workflow.delete"
