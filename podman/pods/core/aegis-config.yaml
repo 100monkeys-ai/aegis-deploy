@@ -84,10 +84,42 @@ spec:
   #   api_key: "env:CORTEX_API_KEY"   # omit for self-hosted
 
   security_contexts:
-    - name: "default"
-      description: "Unrestricted context for orchestrator-managed agent executions."
+    - name: "aegis-system-agent-runtime"
+      description: "Execution context for orchestrator-spawned agent containers. Grants filesystem access scoped to /workspace, shell execution, web access, and the full aegis platform tool surface including agent and workflow authoring tools."
       capabilities:
-        - tool_pattern: "*"
+        - tool_pattern: "fs.*"
+          path_allowlist:
+            - "/workspace"
+        - tool_pattern: "cmd.run"
+        - tool_pattern: "web.search"
+        - tool_pattern: "web.fetch"
+        - tool_pattern: "aegis.schema.get"
+        - tool_pattern: "aegis.schema.validate"
+        - tool_pattern: "aegis.agent.create"
+        - tool_pattern: "aegis.agent.update"
+        - tool_pattern: "aegis.agent.list"
+        - tool_pattern: "aegis.agent.search"
+        - tool_pattern: "aegis.agent.generate"
+        - tool_pattern: "aegis.agent.export"
+        - tool_pattern: "aegis.agent.logs"
+        - tool_pattern: "aegis.agent.wait"
+        - tool_pattern: "aegis.workflow.list"
+        - tool_pattern: "aegis.workflow.search"
+        - tool_pattern: "aegis.workflow.export"
+        - tool_pattern: "aegis.workflow.logs"
+        - tool_pattern: "aegis.workflow.cancel"
+        - tool_pattern: "aegis.workflow.wait"
+        - tool_pattern: "aegis.task.execute"
+        - tool_pattern: "aegis.task.status"
+        - tool_pattern: "aegis.task.list"
+        - tool_pattern: "aegis.task.wait"
+        - tool_pattern: "aegis.task.cancel"
+        - tool_pattern: "aegis.task.logs"
+        - tool_pattern: "aegis.execute.intent"
+        - tool_pattern: "aegis.execute.status"
+        - tool_pattern: "aegis.tools.list"
+        - tool_pattern: "aegis.tools.search"
+        - tool_pattern: "aegis.runtime.list"
       deny_list: []
 
     # ── Operator Context ──────────────────────────────────────────────
