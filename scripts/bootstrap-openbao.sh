@@ -114,6 +114,37 @@ bao write auth/approle/role/aegis-platform \
 # Enable KV v2 secrets engine (idempotent)
 bao secrets enable -path=secret -version=2 kv 2>/dev/null || true
 
+# --- Configure OIDC Auth Method for human admin access (ADR-041, idempotent) ---
+KEYCLOAK_URL="${KEYCLOAK_URL:-https://auth.aegis.local}"
+AEGIS_REALM="${AEGIS_REALM:-aegis}"
+OIDC_CLIENT_ID="${OIDC_CLIENT_ID:-aegis-openbao}"
+# OIDC_CLIENT_SECRET must be set in the calling environment — no safe default
+
+bao auth enable oidc 2>/dev/null || true
+
+bao write auth/oidc/config \
+    oidc_discovery_url="${KEYCLOAK_URL}/realms/${AEGIS_REALM}" \
+    oidc_client_id="${OIDC_CLIENT_ID}" \
+    oidc_client_secret="${OIDC_CLIENT_SECRET}" \
+    default_role="platform-admin"
+
+bao write auth/oidc/role/platform-admin \
+    role_type="oidc" \
+    bound_audiences="${OIDC_CLIENT_ID}" \
+    user_claim="sub" \
+    policies="aegis-platform-admin" \
+    allowed_redirect_uris="${BAO_ADDR}/ui/vault/auth/oidc/oidc/callback"
+
+bao policy write aegis-platform-admin - <<'POLICY'
+path "secret/data/*" { capabilities = ["create","read","update","delete","list"] }
+path "secret/metadata/*" { capabilities = ["list","read","delete"] }
+path "pki/*" { capabilities = ["create","read","update","delete","list"] }
+path "auth/*" { capabilities = ["read","list"] }
+path "sys/policies/*" { capabilities = ["read","list"] }
+POLICY
+
+echo "OIDC auth configured (realm: ${AEGIS_REALM})"
+
 # Get credentials
 ROLE_ID=$(bao read -field=role_id auth/approle/role/aegis-platform/role-id)
 SECRET_ID=$(bao write -field=secret_id -f auth/approle/role/aegis-platform/secret-id)
