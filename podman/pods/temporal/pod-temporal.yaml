@@ -77,14 +77,6 @@ spec:
           value: production
         - name: LOG_LEVEL
           value: info
-        - name: KEYCLOAK_HOST
-          value: "http://aegis-iam:8180"
-        - name: KEYCLOAK_SYSTEM_REALM
-          value: "aegis-system"
-        - name: KEYCLOAK_CLIENT_ID
-          value: "aegis-temporal-worker"
-        - name: KEYCLOAK_CLIENT_SECRET
-          value: "${KEYCLOAK_TEMPORAL_WORKER_SECRET}"
       volumeMounts:
         - name: temporal-worker-data
           mountPath: /app/data

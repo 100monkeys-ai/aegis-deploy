@@ -48,17 +48,6 @@ for pod in $PODS; do
     echo "  -> Pod $pod deployed."
 
     # Post-deploy hooks
-    if [[ "$pod" == "iam" ]]; then
-        echo "  -> Bootstrapping Keycloak..."
-        bash "$ROOT_DIR/scripts/bootstrap-keycloak.sh"
-        # Re-source .env to pick up OIDC_CLIENT_SECRET for subsequent pods
-        set -a
-        # shellcheck source=/dev/null
-        source "$ROOT_DIR/.env"
-        set +a
-        echo "  -> Keycloak bootstrapped and .env reloaded"
-    fi
-
     if [[ "$pod" == "secrets" ]]; then
         echo "  -> Bootstrapping OpenBao..."
         bash "$ROOT_DIR/scripts/bootstrap-openbao.sh"

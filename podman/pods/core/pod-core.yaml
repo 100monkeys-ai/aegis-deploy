@@ -39,16 +39,6 @@ spec:
           value: "${OPENBAO_SECRET_ID}"
         - name: CORTEX_GRPC_URL
           value: "${CORTEX_GRPC_URL}"
-        - name: KEYCLOAK_REALM
-          value: "${KEYCLOAK_REALM}"
-        - name: KEYCLOAK_ISSUER_URL
-          value: "${KEYCLOAK_ISSUER_URL}"
-        - name: KEYCLOAK_JWKS_URI
-          value: "${KEYCLOAK_JWKS_URI}"
-        - name: KEYCLOAK_SYSTEM_ISSUER_URL
-          value: "${KEYCLOAK_SYSTEM_ISSUER_URL}"
-        - name: KEYCLOAK_SYSTEM_JWKS_URI
-          value: "${KEYCLOAK_SYSTEM_JWKS_URI}"
         - name: AEGIS_OTLP_ENDPOINT
           value: "${AEGIS_OTLP_ENDPOINT}"
         - name: AEGIS_CLUSTER_PORT

@@ -2,10 +2,6 @@
 	acme_dns cloudflare {$CLOUDFLARE_API_TOKEN}
 }
 
-{$DOMAIN_KEYCLOAK:auth.localhost} {
-    reverse_proxy aegis-iam:8180
-}
-
 {$DOMAIN_SEAL:seal.localhost} {
     reverse_proxy aegis-seal-gateway:8089
 }

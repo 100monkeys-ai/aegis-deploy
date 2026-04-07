@@ -2,7 +2,7 @@
 set -e
 
 # Create multiple databases for AEGIS platform services
-for db in temporal aegis seaweedfs keycloak; do
+for db in temporal aegis seaweedfs; do
     echo "  Creating database: $db"
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
         SELECT 'CREATE DATABASE $db OWNER $POSTGRES_USER'

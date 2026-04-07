@@ -93,13 +93,6 @@ spec:
     # api_key: "env:CORTEX_API_KEY"   # omit for self-hosted
 
   security_contexts:
-    # Security contexts (ADR-071 §ZaruTier SecurityContext Definitions, ADR-102 §Security Context Model)
-    #
-    # Capability tiers (ADR-102):
-    #   Tier 1 — User tools:           Available to all authenticated contexts (zaru-* and aegis-system-*)
-    #   Tier 2 — System tools:         aegis-system-* contexts only (agent authoring, direct create/update)
-    #   Tier 3 — Operator-only tools:  aegis-system-operator only (destructive + orchestrator commands)
-
     # ── Tier 2: System Tools Context ─────────────────────────────────────────
     # Used by all orchestrator-spawned sub-executions (aegis.agent.generate,
     # aegis.workflow.generate, aegis.task.execute, etc.) and agent containers
@@ -334,27 +327,6 @@ spec:
         - tool_pattern: "aegis.system.info"
         - tool_pattern: "aegis.system.config"
       deny_list: []
-
-  grpc_auth:
-    enabled: true
-
-  iam:
-    realms:
-      - slug: "env:KEYCLOAK_REALM"
-        issuer_url: "env:KEYCLOAK_ISSUER_URL"
-        jwks_uri: "env:KEYCLOAK_JWKS_URI"
-        audience: "account"
-        kind: consumer
-      - slug: "aegis-system"
-        issuer_url: "env:KEYCLOAK_SYSTEM_ISSUER_URL"
-        jwks_uri: "env:KEYCLOAK_SYSTEM_JWKS_URI"
-        audience: "aegis-orchestrator"
-        kind: system
-    jwks_cache_ttl_seconds: 300
-    keycloak_admin:
-      host: "env:KEYCLOAK_HOST"
-      admin_username: "env:KEYCLOAK_ADMIN"
-      admin_password: "env:KEYCLOAK_ADMIN_PASSWORD"
 
   secrets:
     backend:

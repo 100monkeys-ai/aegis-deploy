@@ -14,8 +14,6 @@ spec:
       env:
         - name: CLOUDFLARE_API_TOKEN
           value: "${CLOUDFLARE_API_TOKEN}"
-        - name: DOMAIN_KEYCLOAK
-          value: "${DOMAIN_KEYCLOAK}"
         - name: DOMAIN_SEAL
           value: "${DOMAIN_SEAL}"
         - name: DOMAIN_TEMPORAL

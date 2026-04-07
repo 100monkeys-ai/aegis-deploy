@@ -1,4 +1,4 @@
-.PHONY: setup deploy teardown status networks validate registry-login aegis shell
+.PHONY: setup deploy teardown status networks validate registry-login aegis shell bootstrap-secrets generate-keys redeploy logs clean
 
 PROFILE ?= development
 SCRIPTS := ./scripts
@@ -45,9 +45,6 @@ validate:
 	@bash $(SCRIPTS)/validate-stack.sh
 
 # ---- Bootstrap ----
-bootstrap-keycloak:
-	@bash $(SCRIPTS)/bootstrap-keycloak.sh
-
 bootstrap-secrets:
 	@bash $(SCRIPTS)/bootstrap-openbao.sh
 

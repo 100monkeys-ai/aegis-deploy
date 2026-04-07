@@ -123,42 +123,6 @@ bao write auth/approle/role/aegis-platform \
 # Enable KV v2 secrets engine (idempotent)
 bao secrets enable -path=secret -version=2 kv 2>/dev/null || true
 
-# --- Configure OIDC Auth Method for human admin access (ADR-041, idempotent) ---
-KEYCLOAK_URL="${KEYCLOAK_URL:-${KEYCLOAK_PUBLIC_URL:-https://auth.aegis.local}}"
-AEGIS_REALM="${AEGIS_REALM:-aegis-system}"
-OIDC_CLIENT_ID="${OIDC_CLIENT_ID:-aegis-openbao}"
-# OIDC_CLIENT_SECRET must be set in the calling environment — no safe default
-if [[ -z "${OIDC_CLIENT_SECRET:-}" ]]; then
-    echo "Error: OIDC_CLIENT_SECRET must be set in the calling environment"
-    echo "  Set it in .env or export it before running make bootstrap-secrets"
-    exit 1
-fi
-
-bao auth enable oidc 2>/dev/null || true
-
-bao write auth/oidc/config \
-    oidc_discovery_url="${KEYCLOAK_URL}/realms/${AEGIS_REALM}" \
-    oidc_client_id="${OIDC_CLIENT_ID}" \
-    oidc_client_secret="${OIDC_CLIENT_SECRET}" \
-    default_role="platform-admin"
-
-bao write auth/oidc/role/platform-admin \
-    role_type="oidc" \
-    bound_audiences="${OIDC_CLIENT_ID}" \
-    user_claim="sub" \
-    policies="aegis-platform-admin" \
-    allowed_redirect_uris="${BAO_ADDR}/ui/vault/auth/oidc/oidc/callback"
-
-bao policy write aegis-platform-admin - <<'POLICY'
-path "secret/data/*" { capabilities = ["create","read","update","delete","list"] }
-path "secret/metadata/*" { capabilities = ["list","read","delete"] }
-path "pki/*" { capabilities = ["create","read","update","delete","list"] }
-path "auth/*" { capabilities = ["read","list"] }
-path "sys/policies/*" { capabilities = ["read","list"] }
-POLICY
-
-echo "OIDC auth configured (realm: ${AEGIS_REALM})"
-
 # Get or generate AppRole credentials (idempotent: validate before generating)
 APPROLE_ENV="${ROOT_DIR}/generated/openbao-approle.env"
 CREDENTIALS_VALID=false
@@ -205,7 +169,7 @@ EOL
 fi
 
 # Multi-Tenant Secret Namespacing (ADR-056, idempotent: skip if already provisioned)
-for tenant_slug in zaru-consumer aegis-system; do
+for tenant_slug in aegis-system; do
     if ! bao kv get "secret/aegis/tenants/${tenant_slug}/_meta" >/dev/null 2>&1; then
         bao kv put "secret/aegis/tenants/${tenant_slug}/_meta" \
             provisioned_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
