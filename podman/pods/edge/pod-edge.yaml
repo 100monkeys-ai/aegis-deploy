@@ -30,6 +30,12 @@ spec:
           value: "${DOMAIN_GRAFANA}"
         - name: DOMAIN_PROMETHEUS
           value: "${DOMAIN_PROMETHEUS}"
+        - name: DOMAIN_APP
+          value: "${DOMAIN_APP}"
+        - name: DOMAIN_MCP
+          value: "${DOMAIN_MCP}"
+        - name: DOMAIN_PORTAINER
+          value: "${DOMAIN_PORTAINER}"
       ports:
         - containerPort: 80
           hostPort: 80

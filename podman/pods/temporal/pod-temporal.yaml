@@ -68,7 +68,7 @@ spec:
         - name: TEMPORAL_TASK_QUEUE
           value: aegis-agents
         - name: DATABASE_URL
-          value: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${AEGIS_DB_HOST}:5432/aegis"
+          value: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${AEGIS_DB_HOST}:5433/aegis"
         - name: AEGIS_RUNTIME_GRPC_URL
           value: "aegis-core:50051"
         - name: AEGIS_ORCHESTRATOR_URL
@@ -77,6 +77,14 @@ spec:
           value: production
         - name: LOG_LEVEL
           value: info
+        - name: KEYCLOAK_HOST
+          value: "http://aegis-iam:8180"
+        - name: KEYCLOAK_SYSTEM_REALM
+          value: "aegis-system"
+        - name: KEYCLOAK_CLIENT_ID
+          value: "aegis-temporal-worker"
+        - name: KEYCLOAK_CLIENT_SECRET
+          value: "${KEYCLOAK_TEMPORAL_WORKER_SECRET}"
       volumeMounts:
         - name: temporal-worker-data
           mountPath: /app/data

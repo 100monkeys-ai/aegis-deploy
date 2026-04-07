@@ -13,7 +13,7 @@ spec:
     grpc_bind_addr: "0.0.0.0:50055"
 
   database:
-    url: "sqlite:///app/data/gateway.db"
+    url: "env:SEAL_GATEWAY_DB"
 
   auth:
     disabled: true

@@ -17,7 +17,7 @@ spec:
     - name: gemini
       type: gemini
       endpoint: "https://generativelanguage.googleapis.com/v1beta"
-      api_key: "env:LLM_API_KEY"
+      api_key: "env:ZARU_LLM_API_KEY"
       enabled: true
       models:
         - alias: "default"
@@ -79,11 +79,32 @@ spec:
     seaweedfs:
       filer_url: "http://aegis-storage:8888"
 
-  # cortex:
-  #   grpc_url: "http://aegis-cortex:50052"
-  #   api_key: "env:CORTEX_API_KEY"   # omit for self-hosted
+  # Deploy vendored built-in agent and workflow templates on startup.
+  # Includes agent-creator-agent, workflow-generator-planner-agent, judge agents,
+  # and the builtin-workflow-generator workflow.
+  # Required for aegis.agent.generate and aegis.workflow.generate to function.
+  deploy_builtins: true
+  # Force re-deploy all built-in agents/workflows on startup even if already registered.
+  # Set AEGIS_FORCE_DEPLOY_BUILTINS=true in .env to flush stale definitions after an upgrade.
+  force_deploy_builtins: "env:AEGIS_FORCE_DEPLOY_BUILTINS"
+
+  cortex:
+    grpc_url: "http://aegis-cortex:50052"
+    # api_key: "env:CORTEX_API_KEY"   # omit for self-hosted
 
   security_contexts:
+    # Security contexts (ADR-071 §ZaruTier SecurityContext Definitions, ADR-102 §Security Context Model)
+    #
+    # Capability tiers (ADR-102):
+    #   Tier 1 — User tools:           Available to all authenticated contexts (zaru-* and aegis-system-*)
+    #   Tier 2 — System tools:         aegis-system-* contexts only (agent authoring, direct create/update)
+    #   Tier 3 — Operator-only tools:  aegis-system-operator only (destructive + orchestrator commands)
+
+    # ── Tier 2: System Tools Context ─────────────────────────────────────────
+    # Used by all orchestrator-spawned sub-executions (aegis.agent.generate,
+    # aegis.workflow.generate, aegis.task.execute, etc.) and agent containers
+    # that need to use aegis platform tooling including authoring tools.
+    # Must use aegis-system- prefix to satisfy validate_context_ownership.
     - name: "aegis-system-agent-runtime"
       description: "Execution context for orchestrator-spawned agent containers. Grants filesystem access scoped to /workspace, shell execution, web access, and the full aegis platform tool surface including agent and workflow authoring tools."
       capabilities:
@@ -122,7 +143,147 @@ spec:
         - tool_pattern: "aegis.runtime.list"
       deny_list: []
 
-    # ── Operator Context ──────────────────────────────────────────────
+    # ── Tier 1: User Tools Contexts (zaru-*) ─────────────────────────────────
+    - name: "zaru-free"
+      description: "Public consumer tier. Curated safe tools, rate-limited, limited persistent storage. Agent and workflow authoring via generate tools only."
+      capabilities:
+        - tool_pattern: "web.search"
+        - tool_pattern: "web.fetch"
+        - tool_pattern: "aegis.schema.get"
+        - tool_pattern: "aegis.schema.validate"
+        - tool_pattern: "aegis.agent.list"
+        - tool_pattern: "aegis.agent.search"
+        - tool_pattern: "aegis.agent.export"
+        - tool_pattern: "aegis.agent.generate"
+        - tool_pattern: "aegis.workflow.list"
+        - tool_pattern: "aegis.workflow.search"
+        - tool_pattern: "aegis.workflow.export"
+        - tool_pattern: "aegis.workflow.run"
+        - tool_pattern: "aegis.workflow.generate"
+        - tool_pattern: "aegis.task.execute"
+        - tool_pattern: "aegis.task.status"
+        - tool_pattern: "aegis.task.list"
+        - tool_pattern: "aegis.task.wait"
+        - tool_pattern: "aegis.task.cancel"
+        - tool_pattern: "aegis.task.logs"
+        - tool_pattern: "aegis.execute.intent"
+        - tool_pattern: "aegis.execute.status"
+        - tool_pattern: "aegis.workflow.logs"
+        - tool_pattern: "aegis.workflow.cancel"
+        - tool_pattern: "aegis.workflow.wait"
+        - tool_pattern: "aegis.agent.logs"
+        - tool_pattern: "aegis.agent.wait"
+        - tool_pattern: "aegis.tools.list"
+        - tool_pattern: "aegis.tools.search"
+        - tool_pattern: "aegis.runtime.list"
+      deny_list: []
+
+    - name: "zaru-pro"
+      description: "Individual paid tier. Full consumer tool surface including workflow signals. Agent and workflow authoring via generate tools only."
+      capabilities:
+        - tool_pattern: "web.search"
+        - tool_pattern: "web.fetch"
+        - tool_pattern: "aegis.schema.get"
+        - tool_pattern: "aegis.schema.validate"
+        - tool_pattern: "aegis.agent.list"
+        - tool_pattern: "aegis.agent.search"
+        - tool_pattern: "aegis.agent.export"
+        - tool_pattern: "aegis.agent.generate"
+        - tool_pattern: "aegis.workflow.list"
+        - tool_pattern: "aegis.workflow.search"
+        - tool_pattern: "aegis.workflow.export"
+        - tool_pattern: "aegis.workflow.run"
+        - tool_pattern: "aegis.workflow.generate"
+        - tool_pattern: "aegis.task.execute"
+        - tool_pattern: "aegis.task.status"
+        - tool_pattern: "aegis.task.list"
+        - tool_pattern: "aegis.task.wait"
+        - tool_pattern: "aegis.task.cancel"
+        - tool_pattern: "aegis.task.logs"
+        - tool_pattern: "aegis.execute.intent"
+        - tool_pattern: "aegis.execute.status"
+        - tool_pattern: "aegis.workflow.logs"
+        - tool_pattern: "aegis.workflow.cancel"
+        - tool_pattern: "aegis.workflow.wait"
+        - tool_pattern: "aegis.workflow.signal"
+        - tool_pattern: "aegis.agent.logs"
+        - tool_pattern: "aegis.agent.wait"
+        - tool_pattern: "aegis.tools.list"
+        - tool_pattern: "aegis.tools.search"
+        - tool_pattern: "aegis.runtime.list"
+      deny_list: []
+
+    - name: "zaru-business"
+      description: "Business tier. Full consumer tool surface including workflow signals. Agent and workflow authoring via generate tools only."
+      capabilities:
+        - tool_pattern: "web.search"
+        - tool_pattern: "web.fetch"
+        - tool_pattern: "aegis.schema.get"
+        - tool_pattern: "aegis.schema.validate"
+        - tool_pattern: "aegis.agent.list"
+        - tool_pattern: "aegis.agent.search"
+        - tool_pattern: "aegis.agent.export"
+        - tool_pattern: "aegis.agent.generate"
+        - tool_pattern: "aegis.workflow.list"
+        - tool_pattern: "aegis.workflow.search"
+        - tool_pattern: "aegis.workflow.export"
+        - tool_pattern: "aegis.workflow.run"
+        - tool_pattern: "aegis.workflow.generate"
+        - tool_pattern: "aegis.task.execute"
+        - tool_pattern: "aegis.task.status"
+        - tool_pattern: "aegis.task.list"
+        - tool_pattern: "aegis.task.wait"
+        - tool_pattern: "aegis.task.cancel"
+        - tool_pattern: "aegis.task.logs"
+        - tool_pattern: "aegis.execute.intent"
+        - tool_pattern: "aegis.execute.status"
+        - tool_pattern: "aegis.workflow.logs"
+        - tool_pattern: "aegis.workflow.cancel"
+        - tool_pattern: "aegis.workflow.wait"
+        - tool_pattern: "aegis.workflow.signal"
+        - tool_pattern: "aegis.agent.logs"
+        - tool_pattern: "aegis.agent.wait"
+        - tool_pattern: "aegis.tools.list"
+        - tool_pattern: "aegis.tools.search"
+        - tool_pattern: "aegis.runtime.list"
+      deny_list: []
+
+    - name: "zaru-enterprise"
+      description: "Enterprise tier. Full consumer tool surface including workflow signals. Agent and workflow authoring via generate tools only."
+      capabilities:
+        - tool_pattern: "web.search"
+        - tool_pattern: "web.fetch"
+        - tool_pattern: "aegis.schema.get"
+        - tool_pattern: "aegis.schema.validate"
+        - tool_pattern: "aegis.agent.list"
+        - tool_pattern: "aegis.agent.search"
+        - tool_pattern: "aegis.agent.export"
+        - tool_pattern: "aegis.agent.generate"
+        - tool_pattern: "aegis.workflow.list"
+        - tool_pattern: "aegis.workflow.search"
+        - tool_pattern: "aegis.workflow.export"
+        - tool_pattern: "aegis.workflow.run"
+        - tool_pattern: "aegis.workflow.generate"
+        - tool_pattern: "aegis.task.execute"
+        - tool_pattern: "aegis.task.status"
+        - tool_pattern: "aegis.task.list"
+        - tool_pattern: "aegis.task.wait"
+        - tool_pattern: "aegis.task.cancel"
+        - tool_pattern: "aegis.task.logs"
+        - tool_pattern: "aegis.execute.intent"
+        - tool_pattern: "aegis.execute.status"
+        - tool_pattern: "aegis.workflow.logs"
+        - tool_pattern: "aegis.workflow.cancel"
+        - tool_pattern: "aegis.workflow.wait"
+        - tool_pattern: "aegis.workflow.signal"
+        - tool_pattern: "aegis.agent.logs"
+        - tool_pattern: "aegis.agent.wait"
+        - tool_pattern: "aegis.tools.list"
+        - tool_pattern: "aegis.tools.search"
+        - tool_pattern: "aegis.runtime.list"
+      deny_list: []
+
+    # ── Tier 3: Operator-Only Context ────────────────────────────────────────
     # Platform operators only. Authenticated via aegis-system realm.
     # Superset of enterprise tier plus destructive and orchestrator commands.
     # Uses aegis-system- prefix (not zaru-) so SEAL middleware preserves
@@ -173,6 +334,27 @@ spec:
         - tool_pattern: "aegis.system.info"
         - tool_pattern: "aegis.system.config"
       deny_list: []
+
+  grpc_auth:
+    enabled: true
+
+  iam:
+    realms:
+      - slug: "env:KEYCLOAK_REALM"
+        issuer_url: "env:KEYCLOAK_ISSUER_URL"
+        jwks_uri: "env:KEYCLOAK_JWKS_URI"
+        audience: "account"
+        kind: consumer
+      - slug: "aegis-system"
+        issuer_url: "env:KEYCLOAK_SYSTEM_ISSUER_URL"
+        jwks_uri: "env:KEYCLOAK_SYSTEM_JWKS_URI"
+        audience: "aegis-orchestrator"
+        kind: system
+    jwks_cache_ttl_seconds: 300
+    keycloak_admin:
+      host: "env:KEYCLOAK_HOST"
+      admin_username: "env:KEYCLOAK_ADMIN"
+      admin_password: "env:KEYCLOAK_ADMIN_PASSWORD"
 
   secrets:
     backend:

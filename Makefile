@@ -1,4 +1,4 @@
-.PHONY: setup deploy teardown status networks validate registry-login
+.PHONY: setup deploy teardown status networks validate registry-login aegis shell
 
 PROFILE ?= development
 SCRIPTS := ./scripts
@@ -67,6 +67,14 @@ redeploy: registry-login
 # ---- Helpers ----
 logs:
 	@podman pod logs -f $(POD)
+
+aegis:
+	@if [ -z "$(CMD)" ]; then echo "Usage: make aegis CMD=\"agent list\""; exit 1; fi
+	@podman exec -it aegis-core-aegis-runtime /usr/local/bin/aegis-runtime $(CMD)
+
+shell:
+	@podman exec -it aegis-core-aegis-runtime /bin/bash
+
 
 clean:
 	@bash $(SCRIPTS)/teardown.sh full

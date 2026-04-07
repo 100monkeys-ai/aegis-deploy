@@ -18,23 +18,37 @@ spec:
         - name: AEGIS_CONFIG_PATH
           value: /app/aegis-config.yaml
         - name: AEGIS_DATABASE_URL
-          value: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${AEGIS_DB_HOST}:5432/aegis"
+          value: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${AEGIS_DB_HOST}:5433/aegis"
         - name: AEGIS_CONTAINER_NETWORK
           value: "${AEGIS_CONTAINER_NETWORK}"
         - name: AEGIS_ORCHESTRATOR_URL
           value: "${AEGIS_ORCHESTRATOR_URL}"
         - name: AEGIS_KEEP_CONTAINER
           value: "${AEGIS_KEEP_CONTAINER}"
+        - name: AEGIS_FORCE_DEPLOY_BUILTINS
+          value: "${AEGIS_FORCE_DEPLOY_BUILTINS}"
         - name: AEGIS_SEAL_PRIVATE_KEY
           value: "${AEGIS_SEAL_PRIVATE_KEY}"
-        - name: AEGIS_LOCAL_HOST_MOUNT_POINT
-          value: /tmp/aegis-volumes
-        - name: LLM_API_KEY
-          value: "${LLM_API_KEY}"
+        - name: AEGIS_SEAL_GATEWAY_URL
+          value: "${AEGIS_SEAL_GATEWAY_URL}"
+        - name: ZARU_LLM_API_KEY
+          value: "${ZARU_LLM_API_KEY}"
         - name: OPENBAO_ROLE_ID
           value: "${OPENBAO_ROLE_ID}"
         - name: OPENBAO_SECRET_ID
           value: "${OPENBAO_SECRET_ID}"
+        - name: CORTEX_GRPC_URL
+          value: "${CORTEX_GRPC_URL}"
+        - name: KEYCLOAK_REALM
+          value: "${KEYCLOAK_REALM}"
+        - name: KEYCLOAK_ISSUER_URL
+          value: "${KEYCLOAK_ISSUER_URL}"
+        - name: KEYCLOAK_JWKS_URI
+          value: "${KEYCLOAK_JWKS_URI}"
+        - name: KEYCLOAK_SYSTEM_ISSUER_URL
+          value: "${KEYCLOAK_SYSTEM_ISSUER_URL}"
+        - name: KEYCLOAK_SYSTEM_JWKS_URI
+          value: "${KEYCLOAK_SYSTEM_JWKS_URI}"
         - name: AEGIS_OTLP_ENDPOINT
           value: "${AEGIS_OTLP_ENDPOINT}"
         - name: AEGIS_CLUSTER_PORT
@@ -61,8 +75,6 @@ spec:
           mountPath: /app/data
         - name: aegis-home
           mountPath: /root/.aegis
-        - name: local-volumes
-          mountPath: /tmp/aegis-volumes
       readinessProbe:
         httpGet:
           path: /health
@@ -89,7 +101,3 @@ spec:
     - name: aegis-home
       persistentVolumeClaim:
         claimName: aegis-home-data
-    - name: local-volumes
-      hostPath:
-        path: ./local-volumes
-        type: DirectoryOrCreate

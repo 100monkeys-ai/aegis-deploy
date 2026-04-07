@@ -4,6 +4,15 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
+# Source .env so OIDC_CLIENT_SECRET and other env vars are available
+ENV_FILE="${ROOT_DIR}/.env"
+if [[ -f "$ENV_FILE" ]]; then
+    set -a
+    # shellcheck source=/dev/null
+    source "$ENV_FILE"
+    set +a
+fi
+
 BAO_ADDR="${BAO_ADDR:-http://localhost:8200}"
 INIT_FILE="${ROOT_DIR}/generated/openbao-init.json"
 
@@ -115,10 +124,15 @@ bao write auth/approle/role/aegis-platform \
 bao secrets enable -path=secret -version=2 kv 2>/dev/null || true
 
 # --- Configure OIDC Auth Method for human admin access (ADR-041, idempotent) ---
-KEYCLOAK_URL="${KEYCLOAK_URL:-https://auth.aegis.local}"
-AEGIS_REALM="${AEGIS_REALM:-aegis}"
+KEYCLOAK_URL="${KEYCLOAK_URL:-${KEYCLOAK_PUBLIC_URL:-https://auth.aegis.local}}"
+AEGIS_REALM="${AEGIS_REALM:-aegis-system}"
 OIDC_CLIENT_ID="${OIDC_CLIENT_ID:-aegis-openbao}"
 # OIDC_CLIENT_SECRET must be set in the calling environment — no safe default
+if [[ -z "${OIDC_CLIENT_SECRET:-}" ]]; then
+    echo "Error: OIDC_CLIENT_SECRET must be set in the calling environment"
+    echo "  Set it in .env or export it before running make bootstrap-secrets"
+    exit 1
+fi
 
 bao auth enable oidc 2>/dev/null || true
 
@@ -145,38 +159,61 @@ POLICY
 
 echo "OIDC auth configured (realm: ${AEGIS_REALM})"
 
-# Get credentials
-ROLE_ID=$(bao read -field=role_id auth/approle/role/aegis-platform/role-id)
-SECRET_ID=$(bao write -field=secret_id -f auth/approle/role/aegis-platform/secret-id)
+# Get or generate AppRole credentials (idempotent: validate before generating)
+APPROLE_ENV="${ROOT_DIR}/generated/openbao-approle.env"
+CREDENTIALS_VALID=false
 
-mkdir -p "${ROOT_DIR}/generated"
-cat > "${ROOT_DIR}/generated/openbao-approle.env" <<EOL
+if [[ -f "$APPROLE_ENV" ]]; then
+    # shellcheck source=/dev/null
+    source "$APPROLE_ENV"
+    if [[ -n "${OPENBAO_ROLE_ID:-}" && -n "${OPENBAO_SECRET_ID:-}" ]]; then
+        if bao write -field=client_token auth/approle/login \
+            role_id="${OPENBAO_ROLE_ID}" \
+            secret_id="${OPENBAO_SECRET_ID}" >/dev/null 2>&1; then
+            ROLE_ID="$OPENBAO_ROLE_ID"
+            SECRET_ID="$OPENBAO_SECRET_ID"
+            CREDENTIALS_VALID=true
+            echo "AppRole credentials are valid, skipping generation"
+        fi
+    fi
+fi
+
+if [[ "$CREDENTIALS_VALID" == "false" ]]; then
+    ROLE_ID=$(bao read -field=role_id auth/approle/role/aegis-platform/role-id)
+    SECRET_ID=$(bao write -field=secret_id -f auth/approle/role/aegis-platform/secret-id)
+
+    mkdir -p "${ROOT_DIR}/generated"
+    cat > "$APPROLE_ENV" <<EOL
 OPENBAO_ROLE_ID=$ROLE_ID
 OPENBAO_SECRET_ID=$SECRET_ID
 EOL
+    chmod 600 "$APPROLE_ENV"
+    echo "AppRole credentials generated. Written to generated/openbao-approle.env"
 
-echo "AppRole configured. Credentials written to generated/openbao-approle.env"
-
-# Update .env
-ENV_FILE="${ROOT_DIR}/.env"
-if [[ -f "$ENV_FILE" ]]; then
-    for kv in "OPENBAO_ROLE_ID=${ROLE_ID}" "OPENBAO_SECRET_ID=${SECRET_ID}"; do
-        key="${kv%%=*}"
-        if grep -q "^${key}=" "$ENV_FILE" 2>/dev/null; then
-            sed -i "s|^${key}=.*|${kv}|" "$ENV_FILE"
-        else
-            echo "$kv" >> "$ENV_FILE"
-        fi
-    done
-    echo "Updated .env with AppRole credentials"
+    ENV_FILE="${ROOT_DIR}/.env"
+    if [[ -f "$ENV_FILE" ]]; then
+        for kv in "OPENBAO_ROLE_ID=${ROLE_ID}" "OPENBAO_SECRET_ID=${SECRET_ID}"; do
+            key="${kv%%=*}"
+            if grep -q "^${key}=" "$ENV_FILE" 2>/dev/null; then
+                sed -i "s|^${key}=.*|${kv}|" "$ENV_FILE"
+            else
+                echo "$kv" >> "$ENV_FILE"
+            fi
+        done
+        echo "Updated .env with AppRole credentials"
+    fi
 fi
 
-# Multi-Tenant Secret Namespacing (ADR-056)
-for tenant_slug in aegis-system; do
-    bao kv put "secret/aegis/tenants/${tenant_slug}/_meta" \
-        provisioned_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-        >/dev/null 2>&1 || true
-    echo "Provisioned secret namespace for tenant: ${tenant_slug}"
+# Multi-Tenant Secret Namespacing (ADR-056, idempotent: skip if already provisioned)
+for tenant_slug in zaru-consumer aegis-system; do
+    if ! bao kv get "secret/aegis/tenants/${tenant_slug}/_meta" >/dev/null 2>&1; then
+        bao kv put "secret/aegis/tenants/${tenant_slug}/_meta" \
+            provisioned_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            >/dev/null
+        echo "Provisioned secret namespace for tenant: ${tenant_slug}"
+    else
+        echo "Secret namespace already exists for tenant: ${tenant_slug}, skipping"
+    fi
 done
 
 echo "OpenBao bootstrap complete"

@@ -49,6 +49,32 @@ spec:
         initialDelaySeconds: 10
         periodSeconds: 10
 
+    - name: pgbouncer
+      image: docker.io/edoburu/pgbouncer:latest
+      env:
+        - name: DATABASE_URLS
+          value: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5432/zaru,postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5432/aegis,postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5432/seal_gateway"
+        - name: LISTEN_PORT
+          value: "5433"
+        - name: POOL_MODE
+          value: "transaction"
+        - name: MAX_CLIENT_CONN
+          value: "200"
+        - name: DEFAULT_POOL_SIZE
+          value: "20"
+        - name: SERVER_RESET_QUERY
+          value: ""
+        - name: AUTH_TYPE
+          value: "scram-sha-256"
+      ports:
+        - containerPort: 5433
+          hostPort: 5433
+      readinessProbe:
+        tcpSocket:
+          port: 5433
+        initialDelaySeconds: 10
+        periodSeconds: 10
+
   volumes:
     - name: postgres-data
       persistentVolumeClaim:

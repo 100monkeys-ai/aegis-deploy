@@ -1,4 +1,12 @@
 # AEGIS StandardRuntime Registry
+# ================================
+# Canonical, vetted mapping of language+version → Docker image tags
+# All images use deterministic, production-grade variants (-slim, -alpine)
+# CustomRuntime images are not subject to this registry and are user-supplied
+#
+# Source of Truth: ADR-043 (AEGIS Agent Runtimes), ADR-045 (Container Registry Management)
+# Last Updated: 2026-02-25
+#
 apiVersion: aegis.ai/v1
 kind: RuntimeRegistry
 metadata:

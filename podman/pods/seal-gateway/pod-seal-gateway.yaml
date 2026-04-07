@@ -19,7 +19,7 @@ spec:
         - name: SEAL_GATEWAY_GRPC_BIND
           value: "0.0.0.0:50055"
         - name: SEAL_GATEWAY_DB
-          value: "sqlite:///app/data/gateway.db"
+          value: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${AEGIS_DB_HOST}:5433/seal_gateway"
         - name: SEAL_GATEWAY_AUTH_DISABLED
           value: "true"
         - name: SEAL_GATEWAY_NFS_HOST
@@ -34,8 +34,6 @@ spec:
         - containerPort: 50055
           hostPort: 50055
       volumeMounts:
-        - name: seal-gateway-data
-          mountPath: /app/data
         - name: seal-gateway-config
           mountPath: /etc/aegis/seal-gateway-config.yaml
         - name: podman-socket
@@ -51,9 +49,6 @@ spec:
           type: "spc_t"
 
   volumes:
-    - name: seal-gateway-data
-      persistentVolumeClaim:
-        claimName: aegis-seal-gateway-data
     - name: seal-gateway-config
       hostPath:
         path: ${AEGIS_ROOT}/podman/pods/seal-gateway/seal-gateway-config.yaml
