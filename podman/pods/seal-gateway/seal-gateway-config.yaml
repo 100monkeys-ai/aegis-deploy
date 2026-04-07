@@ -31,7 +31,7 @@ spec:
   cli:
     container_cli: "podman"
     nfs_server_host: "host.containers.internal"
-    nfs_server_port: 2049
+    nfs_port: 2049
     nfs_mount_port: 20048
 
   ui:

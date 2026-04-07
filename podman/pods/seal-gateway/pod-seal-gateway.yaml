@@ -46,6 +46,9 @@ spec:
           port: 8089
         initialDelaySeconds: 10
         periodSeconds: 10
+      securityContext:
+        seLinuxOptions:
+          type: "spc_t"
 
   volumes:
     - name: seal-gateway-data
