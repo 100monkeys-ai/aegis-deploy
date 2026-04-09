@@ -44,6 +44,41 @@ Select a profile with `PROFILE=<name> make deploy`. Default: `development`.
 
 All pods join the `aegis-network` bridge network.
 
+## FUSE Daemon (Host-Side Storage)
+
+The AEGIS FUSE daemon is a **host-side** component -- it runs on the host as a
+systemd user service, not inside a container. It provides native POSIX
+filesystem access to workspace volumes via the FSAL security boundary.
+
+Rootless Podman containers cannot mount FUSE filesystems internally, so the
+daemon runs on the host and exposes mountpoints that are bind-mounted into
+execution containers. This gives agents transparent read/write access to their
+workspace files.
+
+### Architecture
+
+- Connects to the orchestrator's gRPC endpoint for FSAL operations
+- Mounts workspace volumes as FUSE filesystems on the host
+- Execution containers access files through bind mounts from FUSE mountpoints
+- All operations pass through the FSAL security boundary (tenant isolation,
+  access policies)
+
+### Management
+
+The daemon is started automatically by `make deploy` and managed via systemd:
+
+```bash
+systemctl --user start aegis-fuse-daemon
+systemctl --user stop aegis-fuse-daemon
+systemctl --user status aegis-fuse-daemon
+journalctl --user -u aegis-fuse-daemon -f   # tail logs
+```
+
+### Prerequisites
+
+Requires the `fuse3` package and `fuse` kernel module -- both are installed
+automatically by `make setup`.
+
 ## Edge Proxy (Optional)
 
 The `pod-edge` directory contains a Caddy-based reverse proxy for production deployments with automatic TLS via Cloudflare DNS challenge.
