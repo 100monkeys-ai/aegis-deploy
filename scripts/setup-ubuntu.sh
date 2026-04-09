@@ -123,6 +123,14 @@ podman stop --all 2>/dev/null || true
 podman system migrate 2>/dev/null || true
 success "Rootless storage initialised"
 
+# Ensure FUSE kernel module is loaded (required for FSAL FUSE transport)
+if ! lsmod | grep -q '^fuse\b'; then
+    sudo modprobe fuse
+    success "Loaded FUSE kernel module"
+else
+    info "FUSE kernel module already loaded"
+fi
+
 SYSCTL_KEY="net.ipv4.ip_unprivileged_port_start"
 SYSCTL_VALUE="80"
 SYSCTL_CONF="/etc/sysctl.conf"
