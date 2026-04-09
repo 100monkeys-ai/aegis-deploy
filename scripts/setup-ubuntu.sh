@@ -157,6 +157,13 @@ systemctl --user daemon-reload
 systemctl --user enable --now podman.socket
 success "podman.socket enabled and started"
 
+# Install FUSE daemon systemd service (ADR-107)
+mkdir -p ~/.config/systemd/user
+cp "$ROOT_DIR/systemd/aegis-fuse-daemon.service" ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable aegis-fuse-daemon
+success "FUSE daemon systemd service installed and enabled"
+
 SOCKET_PATH="${XDG_RUNTIME_DIR}/podman/podman.sock"
 WAITED=0
 until [[ -S "$SOCKET_PATH" ]]; do

@@ -12,10 +12,6 @@ spec:
     # --- AEGIS Runtime ---
     - name: aegis-runtime
       image: "ghcr.io/100monkeys-ai/aegis-runtime:${AEGIS_IMAGE_TAG}"
-      securityContext:
-        capabilities:
-          add:
-            - SYS_ADMIN
       env:
         - name: RUST_LOG
           value: "${RUST_LOG}"
@@ -69,11 +65,6 @@ spec:
           mountPath: /app/data
         - name: aegis-home
           mountPath: /root/.aegis
-        - name: fuse-device
-          mountPath: /dev/fuse
-        - name: fuse-mounts
-          mountPath: /tmp/aegis-fuse-mounts
-          mountPropagation: Bidirectional
       readinessProbe:
         httpGet:
           path: /health
@@ -100,11 +91,3 @@ spec:
     - name: aegis-home
       persistentVolumeClaim:
         claimName: aegis-home-data
-    - name: fuse-device
-      hostPath:
-        path: /dev/fuse
-        type: CharDevice
-    - name: fuse-mounts
-      hostPath:
-        path: /tmp/aegis-fuse-mounts
-        type: DirectoryOrCreate

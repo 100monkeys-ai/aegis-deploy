@@ -29,6 +29,11 @@ echo "Pods: $PODS"
 # Ensure networks exist
 bash "$ROOT_DIR/podman/networks/create-networks.sh"
 
+# Start FUSE daemon (host-side, ADR-107)
+echo "  -> Starting FUSE daemon..."
+systemctl --user start aegis-fuse-daemon || true
+echo "  -> FUSE daemon started"
+
 # Deploy each pod in order
 for pod in $PODS; do
     POD_DIR="$PODS_DIR/$pod"

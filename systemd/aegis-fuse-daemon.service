@@ -1,0 +1,18 @@
+[Unit]
+Description=AEGIS FUSE Daemon (ADR-107)
+Documentation=https://docs.100monkeys.ai/docs/architecture/storage-gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%h/100monkeys/aegis-platform-deployment/bin/aegis fuse-daemon start \
+  --orchestrator-url grpc://127.0.0.1:50051 \
+  --mount-prefix /tmp/aegis-fuse-mounts \
+  --listen-addr 127.0.0.1:50052
+Restart=always
+RestartSec=3
+Environment=RUST_LOG=info
+
+[Install]
+WantedBy=default.target
