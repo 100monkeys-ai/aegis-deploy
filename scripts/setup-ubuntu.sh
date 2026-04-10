@@ -130,6 +130,8 @@ if ! lsmod | grep -q '^fuse\b'; then
 else
     info "FUSE kernel module already loaded"
 fi
+echo "fuse" | sudo tee /etc/modules-load.d/aegis-fuse.conf > /dev/null
+success "Persisted FUSE kernel module across reboots"
 
 SYSCTL_KEY="net.ipv4.ip_unprivileged_port_start"
 SYSCTL_VALUE="80"

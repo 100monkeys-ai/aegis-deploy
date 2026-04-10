@@ -32,6 +32,11 @@ echo "Pods: $PODS"
 # Ensure networks exist
 bash "$ROOT_DIR/podman/networks/create-networks.sh"
 
+# Start FUSE daemon before pods (host-side, ADR-107)
+echo "  -> Starting FUSE daemon..."
+systemctl --user start aegis-fuse-daemon || true
+echo "  -> FUSE daemon started"
+
 # Deploy each pod in order
 for pod in $PODS; do
     POD_DIR="$PODS_DIR/$pod"
@@ -62,11 +67,6 @@ for pod in $PODS; do
         echo "  -> OpenBao bootstrapped and .env reloaded"
     fi
 done
-
-# Start FUSE daemon if not already running (host-side, ADR-107)
-echo "  -> Starting FUSE daemon..."
-systemctl --user start aegis-fuse-daemon || true
-echo "  -> FUSE daemon started"
 
 echo ""
 echo "Deployment complete. Run 'make status' to verify."
