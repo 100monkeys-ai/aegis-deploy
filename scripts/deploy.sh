@@ -36,8 +36,13 @@ bash "$ROOT_DIR/podman/networks/create-networks.sh"
 mkdir -p /tmp/aegis-fuse-mounts
 chmod 755 /tmp/aegis-fuse-mounts
 echo "  -> FUSE mount prefix directory ready"
-# Start FUSE daemon before pods (host-side, ADR-107)
-echo "  -> Starting FUSE daemon..."
+
+# Extract aegis binary from image (atomic rename, safe while daemon is running)
+echo "  -> Extracting aegis CLI from image..."
+bash "$SCRIPT_DIR/install-aegis-cli.sh"
+
+# Restart FUSE daemon to pick up new binary
+echo "  -> Restarting FUSE daemon..."
 systemctl --user restart aegis-fuse-daemon || true
 echo "  -> FUSE daemon started"
 

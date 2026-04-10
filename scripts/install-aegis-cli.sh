@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # =============================================================================
-# AEGIS Platform — Install aegis CLI Binary
+# AEGIS Platform — Extract aegis CLI from container image
 # =============================================================================
-# Downloads the latest aegis CLI binary from GitHub releases and installs it
-# to bin/aegis. Skips download if the installed version already matches.
+# Extracts the aegis binary from the already-pulled orchestrator image so the
+# host-side FUSE daemon binary is always in sync with the running pod.
 #
 # Usage:
 #   bash scripts/install-aegis-cli.sh
@@ -12,13 +12,21 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-
-REPO="100monkeys-ai/aegis-orchestrator"
-ASSET="aegis-linux-x86_64.tar.gz"
 BIN_DIR="$ROOT_DIR/bin"
 BIN_PATH="$BIN_DIR/aegis"
 
-# Load .env for optional GHCR_TOKEN auth
+# ── Colours ──────────────────────────────────────────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+RESET='\033[0m'
+
+info()    { echo -e "${CYAN}${BOLD}[install-cli]${RESET} $*"; }
+success() { echo -e "${GREEN}${BOLD}[install-cli]${RESET} $*"; }
+die()     { echo -e "${RED}${BOLD}[install-cli] ERROR:${RESET} $*" >&2; exit 1; }
+
+# ── Load image tag from .env ─────────────────────────────────────────────────
 if [[ -f "$ROOT_DIR/.env" ]]; then
     set -a
     # shellcheck source=/dev/null
@@ -26,67 +34,25 @@ if [[ -f "$ROOT_DIR/.env" ]]; then
     set +a
 fi
 
-# ---- Resolve latest version ------------------------------------------------
+AEGIS_IMAGE_TAG="${AEGIS_IMAGE_TAG:-latest}"
+IMAGE="ghcr.io/100monkeys-ai/aegis-runtime:${AEGIS_IMAGE_TAG}"
 
-API_URL="https://api.github.com/repos/${REPO}/releases?per_page=1"
+info "Extracting aegis binary from ${IMAGE}..."
 
-AUTH_HEADER=()
-if [[ -n "${GHCR_TOKEN:-}" ]]; then
-    AUTH_HEADER=(-H "Authorization: token ${GHCR_TOKEN}")
-fi
+# ── Pull image (no-op if already present) ────────────────────────────────────
+podman pull "${IMAGE}"
 
-RELEASE_JSON=$(curl -fsSL "${AUTH_HEADER[@]}" "$API_URL")
+# ── Extract binary via temp container (atomic rename) ────────────────────────
+CONTAINER_NAME="aegis-cli-extract-$$"
+podman create --name "${CONTAINER_NAME}" "${IMAGE}" >/dev/null
 
-if command -v jq &>/dev/null; then
-    VERSION=$(echo "$RELEASE_JSON" | jq -r '.[0].tag_name // empty')
-else
-    VERSION=$(echo "$RELEASE_JSON" | grep -m1 '"tag_name"' | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-fi
+mkdir -p "${BIN_DIR}"
 
-if [[ -z "${VERSION:-}" ]]; then
-    echo "ERROR: Could not determine latest release version"
-    exit 1
-fi
+podman cp "${CONTAINER_NAME}:/usr/local/bin/aegis" "${BIN_PATH}.new"
+podman rm "${CONTAINER_NAME}" >/dev/null
 
-echo "Latest aegis CLI version: $VERSION"
+# Atomic swap — safe to do while old binary is running
+mv "${BIN_PATH}.new" "${BIN_PATH}"
+chmod 0755 "${BIN_PATH}"
 
-# ---- Check if already installed --------------------------------------------
-
-if [[ -x "$BIN_PATH" ]]; then
-    INSTALLED_VERSION=$("$BIN_PATH" --version 2>/dev/null | awk '{print $NF}' || true)
-    # Strip leading 'v' for comparison
-    VERSION_BARE="${VERSION#v}"
-    if [[ "$INSTALLED_VERSION" == "$VERSION_BARE" || "$INSTALLED_VERSION" == "$VERSION" ]]; then
-        echo "aegis CLI $VERSION already installed, skipping download."
-        exit 0
-    fi
-fi
-
-# ---- Download and install --------------------------------------------------
-
-DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/${ASSET}"
-TMPDIR=$(mktemp -d)
-trap 'rm -rf "$TMPDIR"' EXIT
-
-echo "Downloading $DOWNLOAD_URL ..."
-curl -fsSL "${AUTH_HEADER[@]}" -o "$TMPDIR/$ASSET" "$DOWNLOAD_URL"
-
-echo "Extracting..."
-tar -xzf "$TMPDIR/$ASSET" -C "$TMPDIR"
-
-# Find the binary in the extracted contents
-EXTRACTED_BIN=$(find "$TMPDIR" -name "aegis" -type f -executable | head -1)
-if [[ -z "$EXTRACTED_BIN" ]]; then
-    # Fallback: look for any file named aegis
-    EXTRACTED_BIN=$(find "$TMPDIR" -name "aegis" -type f | head -1)
-fi
-
-if [[ -z "${EXTRACTED_BIN:-}" ]]; then
-    echo "ERROR: Could not find aegis binary in extracted archive"
-    exit 1
-fi
-
-mkdir -p "$BIN_DIR"
-install -m 0755 "$EXTRACTED_BIN" "$BIN_PATH"
-
-echo "Installed aegis CLI $VERSION to $BIN_PATH"
+success "Installed aegis to ${BIN_PATH} (from ${IMAGE})"
