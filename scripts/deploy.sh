@@ -34,7 +34,7 @@ bash "$ROOT_DIR/podman/networks/create-networks.sh"
 
 # Start FUSE daemon before pods (host-side, ADR-107)
 echo "  -> Starting FUSE daemon..."
-systemctl --user start aegis-fuse-daemon || true
+systemctl --user restart aegis-fuse-daemon || true
 echo "  -> FUSE daemon started"
 
 # Deploy each pod in order
