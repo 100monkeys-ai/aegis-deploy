@@ -48,7 +48,7 @@ podman create --name "${CONTAINER_NAME}" "${IMAGE}" >/dev/null
 
 mkdir -p "${BIN_DIR}"
 
-podman cp "${CONTAINER_NAME}:/usr/local/bin/aegis" "${BIN_PATH}.new"
+podman cp "${CONTAINER_NAME}:/usr/local/bin/aegis-runtime" "${BIN_PATH}.new"
 podman rm "${CONTAINER_NAME}" >/dev/null
 
 # Atomic swap — safe to do while old binary is running
