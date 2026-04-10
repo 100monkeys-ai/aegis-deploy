@@ -181,6 +181,28 @@ chmod 755 /tmp/aegis-fuse-mounts
 success "FUSE mount prefix directory ready at /tmp/aegis-fuse-mounts"
 success "FUSE daemon systemd service installed and enabled"
 
+# ── Registry login (needed to pull image for binary extraction) ───────────────
+if [[ -f "$ROOT_DIR/.env" ]]; then
+    set -a
+    # shellcheck source=/dev/null
+    source "$ROOT_DIR/.env"
+    set +a
+fi
+if [[ -n "${GHCR_TOKEN:-}" ]]; then
+    echo "${GHCR_TOKEN}" | podman login ghcr.io --username "${GHCR_USERNAME}" --password-stdin
+    success "Logged in to ghcr.io"
+else
+    warn "GHCR_TOKEN not set in .env — skipping registry login (binary extract will fail if image is not cached)"
+fi
+
+# Extract aegis binary from image (single source of truth, ADR-107)
+info "Extracting aegis CLI from container image..."
+bash "$SCRIPT_DIR/install-aegis-cli.sh"
+
+# Start FUSE daemon now that binary is in place
+systemctl --user start aegis-fuse-daemon || true
+success "FUSE daemon started"
+
 SOCKET_PATH="${XDG_RUNTIME_DIR}/podman/podman.sock"
 WAITED=0
 until [[ -S "$SOCKET_PATH" ]]; do
