@@ -7,8 +7,8 @@ Wants=network-online.target
 [Service]
 Type=simple
 Environment=RUST_LOG=info
-Environment=AEGIS_FUSE_DAEMON_LISTEN_ADDR=127.0.0.1:50053
-Environment=AEGIS_FUSE_DAEMON_ENDPOINT=http://127.0.0.1:50053
+Environment=AEGIS_FUSE_DAEMON_LISTEN_ADDR=0.0.0.0:50053
+Environment=AEGIS_FUSE_DAEMON_ENDPOINT=http://host.containers.internal:50053
 ExecStart=%h/100monkeys/aegis-deploy/bin/aegis fuse-daemon start \
   --orchestrator-url grpc://127.0.0.1:50051 \
   --mount-prefix /tmp/aegis-fuse-mounts \
