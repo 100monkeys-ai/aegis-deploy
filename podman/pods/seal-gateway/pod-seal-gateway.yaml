@@ -22,8 +22,6 @@ spec:
           value: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${AEGIS_DB_HOST}:5433/seal_gateway"
         - name: SEAL_GATEWAY_AUTH_DISABLED
           value: "true"
-        - name: SEAL_GATEWAY_NFS_HOST
-          value: "${AEGIS_NFS_HOST}"
         - name: SEAL_GATEWAY_CONTAINER_CLI
           value: "podman"
         - name: CONTAINER_HOST

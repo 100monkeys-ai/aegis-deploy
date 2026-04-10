@@ -46,8 +46,6 @@ spec:
     container_socket_path: "/run/podman/podman.sock"
     container_network_mode: "env:AEGIS_CONTAINER_NETWORK"
     orchestrator_url: "env:AEGIS_ORCHESTRATOR_URL"
-    nfs_server_host: "env:AEGIS_NFS_HOST"
-    nfs_port: 2049
     fuse_daemon_endpoint: "env:AEGIS_FUSE_DAEMON_ENDPOINT"
 
   network:

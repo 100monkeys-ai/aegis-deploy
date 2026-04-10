@@ -52,8 +52,6 @@ spec:
           hostPort: 8088
         - containerPort: 50051
           hostPort: 50051
-        - containerPort: 2049
-          hostPort: 2049
       volumeMounts:
         - name: container-sock
           mountPath: /run/podman/podman.sock
