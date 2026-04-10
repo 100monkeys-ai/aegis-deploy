@@ -1,4 +1,4 @@
-.PHONY: setup deploy teardown status networks validate registry-login aegis shell bootstrap-secrets generate-keys redeploy logs clean
+.PHONY: setup deploy teardown status networks validate registry-login install-cli aegis shell bootstrap-secrets generate-keys redeploy logs clean
 
 PROFILE ?= development
 SCRIPTS := ./scripts
@@ -25,8 +25,12 @@ registry-login:
 	echo "$$GHCR_TOKEN" | podman login ghcr.io --username "$$GHCR_USERNAME" --password-stdin && \
 	echo "==> Logged in to ghcr.io as $$GHCR_USERNAME"
 
+# ---- CLI Binary ----
+install-cli:
+	@bash $(SCRIPTS)/install-aegis-cli.sh
+
 # ---- Deploy ----
-deploy: registry-login networks
+deploy: registry-login networks install-cli
 	@echo "==> Deploying AEGIS platform (profile: $(PROFILE))"
 	@bash $(SCRIPTS)/deploy.sh $(PROFILE)
 	@echo "==> Deployment complete"

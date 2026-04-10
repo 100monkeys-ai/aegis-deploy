@@ -14,6 +14,9 @@ fi
 # shellcheck source=/dev/null
 source "$PROFILE_FILE"
 
+# shellcheck source=lib/systemd-user.sh
+source "$SCRIPT_DIR/lib/systemd-user.sh"
+
 echo "Tearing down profile: $PROFILE"
 
 # Reverse order teardown
@@ -30,5 +33,10 @@ for pod in $PODS_REVERSED; do
         podman pod rm "$POD_NAME" || true
     fi
 done
+
+# Stop FUSE daemon (host-side, ADR-107)
+echo "  -> Stopping FUSE daemon..."
+systemctl --user stop aegis-fuse-daemon || true
+echo "  -> FUSE daemon stopped"
 
 echo "Teardown complete."

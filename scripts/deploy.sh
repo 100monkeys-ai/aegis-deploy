@@ -6,6 +6,9 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 PROFILE="${1:-development}"
 PODS_DIR="$ROOT_DIR/podman/pods"
 
+# shellcheck source=lib/systemd-user.sh
+source "$SCRIPT_DIR/lib/systemd-user.sh"
+
 # Load environment
 if [[ -f "$ROOT_DIR/.env" ]]; then
     set -a
