@@ -286,6 +286,9 @@ echo -e "${BOLD}${GREEN}========================================================
 echo ""
 echo -e "  ${BOLD}Podman version:${RESET}     ${PODMAN_VERSION}"
 echo -e "  ${BOLD}Socket path:${RESET}        ${SOCKET_PATH}"
+echo -e "  ${BOLD}aegis version:${RESET}      $(/usr/local/bin/aegis --version 2>/dev/null || echo 'unknown')"
+echo ""
+/usr/local/bin/aegis --help 2>/dev/null || true
 echo ""
 echo -e "${BOLD}Next steps:${RESET}"
 echo ""
