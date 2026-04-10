@@ -32,10 +32,14 @@ echo "Pods: $PODS"
 # Ensure networks exist
 bash "$ROOT_DIR/podman/networks/create-networks.sh"
 
-# Start FUSE daemon (host-side, ADR-107)
-echo "  -> Starting FUSE daemon..."
-systemctl --user start aegis-fuse-daemon || true
-echo "  -> FUSE daemon started"
+# Sync and restart FUSE daemon (host-side, ADR-107)
+echo "  -> Syncing FUSE daemon systemd unit..."
+mkdir -p ~/.config/systemd/user
+cp "$ROOT_DIR/systemd/aegis-fuse-daemon.service" ~/.config/systemd/user/
+systemctl --user daemon-reload
+echo "  -> Restarting FUSE daemon..."
+systemctl --user restart aegis-fuse-daemon || true
+echo "  -> FUSE daemon restarted"
 
 # Deploy each pod in order
 for pod in $PODS; do
