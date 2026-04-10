@@ -41,6 +41,8 @@ spec:
           value: "${CORTEX_GRPC_URL}"
         - name: AEGIS_OTLP_ENDPOINT
           value: "${AEGIS_OTLP_ENDPOINT}"
+        - name: AEGIS_FUSE_DAEMON_ENDPOINT
+          value: "${AEGIS_FUSE_DAEMON_ENDPOINT}"
         - name: AEGIS_CLUSTER_PORT
           value: "${AEGIS_CLUSTER_PORT}"
         - name: CONTAINER_HOST
