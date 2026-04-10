@@ -32,6 +32,10 @@ echo "Pods: $PODS"
 # Ensure networks exist
 bash "$ROOT_DIR/podman/networks/create-networks.sh"
 
+# Ensure FUSE mount prefix directory exists and is owned by this user (ADR-107)
+mkdir -p /tmp/aegis-fuse-mounts
+chmod 755 /tmp/aegis-fuse-mounts
+echo "  -> FUSE mount prefix directory ready"
 # Start FUSE daemon before pods (host-side, ADR-107)
 echo "  -> Starting FUSE daemon..."
 systemctl --user restart aegis-fuse-daemon || true

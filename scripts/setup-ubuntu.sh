@@ -164,6 +164,10 @@ mkdir -p ~/.config/systemd/user
 cp "$ROOT_DIR/systemd/aegis-fuse-daemon.service" ~/.config/systemd/user/
 systemctl --user daemon-reload
 systemctl --user enable aegis-fuse-daemon
+# Ensure FUSE mount prefix directory exists and is owned by this user (ADR-107)
+mkdir -p /tmp/aegis-fuse-mounts
+chmod 755 /tmp/aegis-fuse-mounts
+success "FUSE mount prefix directory ready at /tmp/aegis-fuse-mounts"
 success "FUSE daemon systemd service installed and enabled"
 
 SOCKET_PATH="${XDG_RUNTIME_DIR}/podman/podman.sock"
