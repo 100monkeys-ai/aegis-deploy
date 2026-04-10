@@ -63,14 +63,10 @@ for pod in $PODS; do
     fi
 done
 
-# Sync and restart FUSE daemon (host-side, ADR-107)
-echo "  -> Syncing FUSE daemon systemd unit..."
-mkdir -p ~/.config/systemd/user
-cp "$ROOT_DIR/systemd/aegis-fuse-daemon.service" ~/.config/systemd/user/
-systemctl --user daemon-reload
-echo "  -> Restarting FUSE daemon..."
-systemctl --user restart aegis-fuse-daemon || true
-echo "  -> FUSE daemon restarted"
+# Start FUSE daemon if not already running (host-side, ADR-107)
+echo "  -> Starting FUSE daemon..."
+systemctl --user start aegis-fuse-daemon || true
+echo "  -> FUSE daemon started"
 
 echo ""
 echo "Deployment complete. Run 'make status' to verify."
