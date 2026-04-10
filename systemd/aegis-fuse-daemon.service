@@ -9,7 +9,7 @@ Type=simple
 ExecStart=%h/100monkeys/aegis-deploy/bin/aegis fuse-daemon start \
   --orchestrator-url grpc://127.0.0.1:50051 \
   --mount-prefix /tmp/aegis-fuse-mounts \
-  --listen-addr 127.0.0.1:50052
+  --listen-addr 127.0.0.1:50053
 Restart=always
 RestartSec=3
 Environment=RUST_LOG=info
