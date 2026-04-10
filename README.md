@@ -41,6 +41,7 @@ Select a profile with `PROFILE=<name> make deploy`. Default: `development`.
 | **pod-seal-gateway** | aegis-seal-gateway | 8089 (HTTP), 50055 (gRPC) |
 | **pod-observability** | Jaeger 1.55, Prometheus 2.51, Grafana 10.4, Loki 3.0, Promtail 3.0 | 16686 (Jaeger), 4317/4318 (OTLP), 9090 (Prometheus), 3300 (Grafana), 3100 (Loki) |
 | **pod-storage** | SeaweedFS (master, volume, filer, WebDAV) | 9333 (master), 8080 (volume), 8888 (filer), 7333 (WebDAV) |
+| **host** | FUSE daemon (FuseMountService gRPC) | 50053 — runs on the host as a systemd user service, not in a pod |
 
 All pods join the `aegis-network` bridge network.
 
