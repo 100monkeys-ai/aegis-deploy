@@ -43,6 +43,9 @@ teardown:
 # ---- Status ----
 status:
 	@podman pod ps --format "table {{.Name}}\t{{.Status}}\t{{.Containers}}"
+	@echo ""
+	@echo "FUSE Daemon:"
+	@bash -c 'source $(SCRIPTS)/lib/systemd-user.sh && systemctl --user is-active aegis-fuse-daemon 2>/dev/null && systemctl --user status aegis-fuse-daemon --no-pager -l 2>/dev/null | head -5 || echo "  inactive"'
 
 # ---- Validate ----
 validate:
