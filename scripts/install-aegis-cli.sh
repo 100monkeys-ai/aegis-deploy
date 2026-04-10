@@ -58,6 +58,10 @@ chmod 0755 "${BIN_PATH}"
 # Symlink into /usr/local/bin so aegis is available system-wide
 sudo ln -sf "${BIN_PATH}" /usr/local/bin/aegis
 
+# Ensure XDG_RUNTIME_DIR and DBUS_SESSION_BUS_ADDRESS are set (required for systemctl --user in non-login shells)
+# shellcheck source=scripts/lib/systemd-user.sh
+source "$SCRIPT_DIR/lib/systemd-user.sh"
+
 # Restart the FUSE daemon so it picks up the new binary
 info "Restarting aegis-fuse-daemon..."
 systemctl --user restart aegis-fuse-daemon
