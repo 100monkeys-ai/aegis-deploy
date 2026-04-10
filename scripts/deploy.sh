@@ -32,15 +32,6 @@ echo "Pods: $PODS"
 # Ensure networks exist
 bash "$ROOT_DIR/podman/networks/create-networks.sh"
 
-# Sync and restart FUSE daemon (host-side, ADR-107)
-echo "  -> Syncing FUSE daemon systemd unit..."
-mkdir -p ~/.config/systemd/user
-cp "$ROOT_DIR/systemd/aegis-fuse-daemon.service" ~/.config/systemd/user/
-systemctl --user daemon-reload
-echo "  -> Restarting FUSE daemon..."
-systemctl --user restart aegis-fuse-daemon || true
-echo "  -> FUSE daemon restarted"
-
 # Deploy each pod in order
 for pod in $PODS; do
     POD_DIR="$PODS_DIR/$pod"
@@ -71,6 +62,15 @@ for pod in $PODS; do
         echo "  -> OpenBao bootstrapped and .env reloaded"
     fi
 done
+
+# Sync and restart FUSE daemon (host-side, ADR-107)
+echo "  -> Syncing FUSE daemon systemd unit..."
+mkdir -p ~/.config/systemd/user
+cp "$ROOT_DIR/systemd/aegis-fuse-daemon.service" ~/.config/systemd/user/
+systemctl --user daemon-reload
+echo "  -> Restarting FUSE daemon..."
+systemctl --user restart aegis-fuse-daemon || true
+echo "  -> FUSE daemon restarted"
 
 echo ""
 echo "Deployment complete. Run 'make status' to verify."
