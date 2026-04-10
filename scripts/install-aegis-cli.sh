@@ -55,4 +55,7 @@ podman rm "${CONTAINER_NAME}" >/dev/null
 mv "${BIN_PATH}.new" "${BIN_PATH}"
 chmod 0755 "${BIN_PATH}"
 
-success "Installed aegis to ${BIN_PATH} (from ${IMAGE})"
+# Symlink into /usr/local/bin so aegis is available system-wide
+sudo ln -sf "${BIN_PATH}" /usr/local/bin/aegis
+
+success "Installed aegis to ${BIN_PATH} and symlinked to /usr/local/bin/aegis (from ${IMAGE})"
