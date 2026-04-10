@@ -58,4 +58,9 @@ chmod 0755 "${BIN_PATH}"
 # Symlink into /usr/local/bin so aegis is available system-wide
 sudo ln -sf "${BIN_PATH}" /usr/local/bin/aegis
 
+# Restart the FUSE daemon so it picks up the new binary
+info "Restarting aegis-fuse-daemon..."
+systemctl --user restart aegis-fuse-daemon
+success "aegis-fuse-daemon restarted"
+
 success "Installed aegis to ${BIN_PATH} and symlinked to /usr/local/bin/aegis (from ${IMAGE})"
