@@ -133,6 +133,17 @@ fi
 echo "fuse" | sudo tee /etc/modules-load.d/aegis-fuse.conf > /dev/null
 success "Persisted FUSE kernel module across reboots"
 
+# Enable user_allow_other in /etc/fuse.conf (required for AllowOther mount option)
+if grep -q '^#user_allow_other' /etc/fuse.conf 2>/dev/null; then
+    sudo sed -i 's/^#user_allow_other/user_allow_other/' /etc/fuse.conf
+    success "Enabled user_allow_other in /etc/fuse.conf"
+elif grep -q '^user_allow_other' /etc/fuse.conf 2>/dev/null; then
+    info "user_allow_other already enabled in /etc/fuse.conf"
+else
+    echo "user_allow_other" | sudo tee -a /etc/fuse.conf > /dev/null
+    success "Added user_allow_other to /etc/fuse.conf"
+fi
+
 SYSCTL_KEY="net.ipv4.ip_unprivileged_port_start"
 SYSCTL_VALUE="80"
 SYSCTL_CONF="/etc/sysctl.conf"
