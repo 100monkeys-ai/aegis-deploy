@@ -63,32 +63,44 @@ if [[ "$UBUNTU_VERSION" == "24.04" ]]; then
     sudo apt-get install -y podman "${COMMON_DEPS[@]}"
 
 elif [[ "$UBUNTU_VERSION" == "22.04" ]]; then
-    info "Ubuntu 22.04: adding Kubic OBS repository for Podman 4.x+"
+    info "Ubuntu 22.04: adding containers unstable repository for Podman 4.x+"
 
-    KUBIC_URL="https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_22.04"
-    KUBIC_KEY="/etc/apt/trusted.gpg.d/kubic-libcontainers.gpg"
-    KUBIC_LIST="/etc/apt/sources.list.d/kubic-libcontainers.list"
+    # Remove stale /stable/ repo if present (only ships 3.4.x)
+    sudo rm -f /etc/apt/sources.list.d/kubic-libcontainers.list
+    sudo rm -f /etc/apt/trusted.gpg.d/kubic-libcontainers.gpg
+
+    KUBIC_URL="https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/unstable/xUbuntu_22.04"
+    KUBIC_KEY="/etc/apt/trusted.gpg.d/kubic-libcontainers-unstable.gpg"
+    KUBIC_LIST="/etc/apt/sources.list.d/kubic-libcontainers-unstable.list"
 
     if [[ ! -f "$KUBIC_KEY" ]]; then
         curl -fsSL "${KUBIC_URL}/Release.key" \
             | gpg --dearmor \
             | sudo tee "$KUBIC_KEY" > /dev/null
-        success "Kubic GPG key installed at $KUBIC_KEY"
+        success "Containers unstable GPG key installed"
     else
-        info "Kubic GPG key already present, skipping"
+        info "Containers unstable GPG key already present, skipping"
     fi
 
     if [[ ! -f "$KUBIC_LIST" ]]; then
         echo "deb ${KUBIC_URL}/ /" \
             | sudo tee "$KUBIC_LIST" > /dev/null
-        success "Kubic apt source added at $KUBIC_LIST"
+        success "Containers unstable apt source added"
     else
-        info "Kubic apt source already present, skipping"
+        info "Containers unstable apt source already present, skipping"
     fi
 
     sudo apt-get update -qq
+
+    # Remove pre-existing Podman 3.x so the unstable repo version installs
+    if podman --version 2>/dev/null | grep -q "^podman version 3\."; then
+        info "Removing pre-existing Podman 3.x..."
+        sudo apt-get remove -y podman buildah || true
+    fi
+
     sudo apt-get install -y podman "${COMMON_DEPS[@]}"
 
+    # aardvark-dns and netavark ship with Podman 4+ from the unstable repo
     if ! dpkg -l aardvark-dns &>/dev/null 2>&1; then
         sudo apt-get install -y aardvark-dns || warn "aardvark-dns not available; DNS inside pods may not resolve service names"
     fi
@@ -98,6 +110,25 @@ PODMAN_VERSION="$(podman --version | awk '{print $3}')"
 PODMAN_MAJOR="${PODMAN_VERSION%%.*}"
 (( PODMAN_MAJOR >= 4 )) || die "Podman ${PODMAN_VERSION} installed but >= 4.0 is required."
 success "Podman ${PODMAN_VERSION} installed"
+
+# =============================================================================
+# PHASE 2b — Delegate cgroup controllers for rootless containers
+# =============================================================================
+info "Phase 2b: Delegating cgroup controllers"
+
+DELEGATE_DIR="/etc/systemd/system/user@.service.d"
+DELEGATE_CONF="${DELEGATE_DIR}/delegate.conf"
+if [[ ! -f "$DELEGATE_CONF" ]]; then
+    sudo mkdir -p "$DELEGATE_DIR"
+    sudo tee "$DELEGATE_CONF" > /dev/null <<'CGROUP_EOF'
+[Service]
+Delegate=cpu cpuset io memory pids
+CGROUP_EOF
+    sudo systemctl daemon-reload
+    success "cgroup controllers delegated (cpu, cpuset, io, memory, pids)"
+else
+    info "cgroup delegation already configured"
+fi
 
 # =============================================================================
 # PHASE 3 — Configure rootless storage
@@ -167,6 +198,25 @@ export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=${XDG_RUNTIME_DIR}/bus}"
 
 systemctl --user daemon-reload
+
+# Remove system-wide masks left by old Podman 3.x packages
+for unit in podman.socket podman.service; do
+    if [[ -L "/etc/xdg/systemd/user/${unit}" ]]; then
+        sudo rm -f "/etc/xdg/systemd/user/${unit}"
+        info "Removed system-wide mask for ${unit}"
+    fi
+done
+systemctl --user unmask podman.socket 2>/dev/null || true
+
+# Ensure ~/.config is owned by the current user (startup script may have
+# created it as root when writing storage.conf)
+if [[ -d "${HOME}/.config" ]] && [[ "$(stat -c '%U' "${HOME}/.config")" != "${USER}" ]]; then
+    sudo chown "${USER}:${USER}" "${HOME}/.config"
+    info "Fixed ownership on ${HOME}/.config"
+fi
+mkdir -p "${HOME}/.config/systemd/user/sockets.target.wants"
+systemctl --user daemon-reload
+
 systemctl --user enable --now podman.socket
 success "podman.socket enabled and started"
 
