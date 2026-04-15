@@ -4,7 +4,7 @@ datasources:
   - name: Prometheus
     type: prometheus
     access: proxy
-    url: http://localhost:9090
+    url: http://aegis-observability:9090
     isDefault: true
     editable: false
     jsonData:
@@ -13,11 +13,11 @@ datasources:
   - name: Loki
     type: loki
     access: proxy
-    url: http://localhost:3100
+    url: http://aegis-observability:3100
     editable: false
 
   - name: Jaeger
     type: jaeger
     access: proxy
-    url: http://localhost:16686
+    url: http://aegis-observability:16686
     editable: false
