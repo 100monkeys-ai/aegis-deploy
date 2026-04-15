@@ -7,6 +7,12 @@ listener "tcp" {
   tls_disable = true
 }
 
+telemetry {
+  prometheus_retention_time = "60s"
+  disable_hostname          = true
+  unauthenticated_metrics_access = true
+}
+
 api_addr = "http://0.0.0.0:8200"
 
 disable_mlock = true

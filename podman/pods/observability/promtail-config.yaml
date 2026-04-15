@@ -10,16 +10,24 @@ clients:
 
 scrape_configs:
   - job_name: podman-containers
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: podman
-          __path__: /var/log/podman-containers/*/*/*.log
+    docker_sd_configs:
+      - host: unix:///var/run/podman.sock
+        refresh_interval: 15s
+    relabel_configs:
+      # Use the container name as the "container" label (strip leading slash)
+      - source_labels: [__meta_docker_container_name]
+        regex: '/?(.*)'
+        target_label: container
+      # Keep the job label
+      - target_label: job
+        replacement: podman
+      # Build the log path from the container ID to point at ctr.log
+      - source_labels: [__meta_docker_container_id]
+        regex: '(.*)'
+        target_label: __path__
+        replacement: /var/log/podman-containers/$1/userdata/ctr.log
     pipeline_stages:
-      - docker: {}
-      - label_copy:
-          container_name: container
-      - timestamp:
-          source: time
-          format: RFC3339Nano
+      - regex:
+          expression: '^[^ ]+ [^ ]+ [^ ]+ (?P<message>.+)$'
+      - output:
+          source: message

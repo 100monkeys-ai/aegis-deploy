@@ -27,9 +27,12 @@ spec:
           value: config/dynamicconfig/development-sql.yaml
         - name: ENABLE_ES
           value: "false"
+        - name: PROMETHEUS_ENDPOINT
+          value: "0.0.0.0:8100"
       ports:
         - containerPort: 7233
           hostPort: 7233
+        - containerPort: 8100
       volumeMounts:
         - name: temporal-config
           mountPath: /etc/temporal/config/dynamicconfig/development-sql.yaml

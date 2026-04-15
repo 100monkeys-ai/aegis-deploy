@@ -154,6 +154,11 @@ podman stop --all 2>/dev/null || true
 podman system migrate 2>/dev/null || true
 success "Rootless storage initialised"
 
+# Install containers.conf (sets k8s-file log driver for Promtail log collection)
+mkdir -p "${HOME}/.config/containers"
+cp "${ROOT_DIR}/podman/containers.conf" "${HOME}/.config/containers/containers.conf"
+success "Installed containers.conf (log_driver=k8s-file)"
+
 # Ensure FUSE kernel module is loaded (required for FSAL FUSE transport)
 if ! lsmod | grep -q '^fuse\b'; then
     sudo modprobe fuse

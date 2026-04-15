@@ -111,6 +111,9 @@ spec:
         - name: podman-logs
           mountPath: /var/log/podman-containers
           readOnly: true
+        - name: podman-sock
+          mountPath: /var/run/podman.sock
+          readOnly: true
       readinessProbe:
         httpGet:
           path: /ready
@@ -164,3 +167,7 @@ spec:
       hostPath:
         path: "${PODMAN_LOG_ROOT}"
         type: Directory
+    - name: podman-sock
+      hostPath:
+        path: "${CONTAINER_SOCK}"
+        type: Socket

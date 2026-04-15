@@ -59,7 +59,7 @@ scrape_configs:
   # Temporal Workflow Engine
   - job_name: temporal
     static_configs:
-      - targets: ['aegis-temporal:7233']
+      - targets: ['aegis-temporal:8100']
         labels:
           service: temporal
           context: temporal
