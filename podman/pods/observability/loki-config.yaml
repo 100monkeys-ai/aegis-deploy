@@ -26,9 +26,9 @@ schema_config:
 
 limits_config:
   retention_period: 168h
+  allow_deletes: true
 
 compactor:
   working_directory: /loki/compactor
   retention_enabled: true
-  retention_deletes_enabled: true
   delete_request_store: filesystem
