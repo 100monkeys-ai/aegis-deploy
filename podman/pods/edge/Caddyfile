@@ -7,6 +7,9 @@
 }
 
 {$DOMAIN_TEMPORAL:temporal.localhost} {
+    basic_auth {
+        {$TEMPORAL_UI_USER} {$TEMPORAL_UI_PASSWORD_HASH}
+    }
     reverse_proxy aegis-temporal:8080
 }
 
