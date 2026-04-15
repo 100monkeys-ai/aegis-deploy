@@ -7,7 +7,7 @@
 }
 
 {$DOMAIN_TEMPORAL:temporal.localhost} {
-    reverse_proxy aegis-temporal:8233
+    reverse_proxy aegis-temporal:8080
 }
 
 {$DOMAIN_JAEGER:jaeger.localhost} {
