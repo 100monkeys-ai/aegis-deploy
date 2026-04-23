@@ -1,4 +1,4 @@
-# AEGIS Observability Pod — Jaeger, Prometheus, Grafana, Loki, Promtail
+# AEGIS Observability Pod — Jaeger, Prometheus, Grafana, Loki, Promtail, otelcol
 # Bounded Context: Observability & Telemetry
 apiVersion: v1
 kind: Pod
@@ -17,10 +17,7 @@ spec:
       ports:
         - containerPort: 16686
           hostPort: 16686
-        - containerPort: 4317
-          hostPort: 4317
-        - containerPort: 4318
-          hostPort: 4318
+        - containerPort: 14250
       readinessProbe:
         httpGet:
           path: /
@@ -121,6 +118,25 @@ spec:
         initialDelaySeconds: 5
         periodSeconds: 10
 
+    - name: otelcol
+      image: docker.io/otel/opentelemetry-collector-contrib:0.99.0
+      args:
+        - "--config=/etc/otelcol/config.yaml"
+      ports:
+        - containerPort: 4317
+          hostPort: 4317
+        - containerPort: 4318
+          hostPort: 4318
+      volumeMounts:
+        - name: otelcol-config
+          mountPath: /etc/otelcol/config.yaml
+      readinessProbe:
+        httpGet:
+          path: /
+          port: 13133
+        initialDelaySeconds: 5
+        periodSeconds: 10
+
   volumes:
     # Prometheus
     - name: prometheus-config
@@ -171,3 +187,8 @@ spec:
       hostPath:
         path: "${CONTAINER_SOCK}"
         type: Socket
+    # otelcol
+    - name: otelcol-config
+      hostPath:
+        path: ./podman/pods/observability/otelcol-config.yaml
+        type: File
