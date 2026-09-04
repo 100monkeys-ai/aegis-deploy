@@ -16,22 +16,3 @@ updates:
       - docker
     commit-message:
       prefix: "chore(docker)"
-
-  # ─── GitHub Actions ───────────────────────────────────────────────────────
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: weekly
-      day: monday
-      time: "06:00"
-      timezone: "America/New_York"
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "chore(ci)"
-    groups:
-      github-actions:
-        patterns:
-          - "*"
