@@ -2,8 +2,33 @@
 	acme_dns cloudflare {$CLOUDFLARE_API_TOKEN}
 }
 
+# The SEAL gateway's public surface is the agent invoke path only. Its
+# operator API, UI and API documentation are not served here: reach them from
+# the host or through an SSH tunnel to port 8089.
 {$DOMAIN_SEAL:seal.localhost} {
-    reverse_proxy aegis-seal-gateway:8089
+    # Access log, to the container's standard output. Credentials are never
+    # logged: the Authorization and Cookie request headers and Set-Cookie
+    # response headers are dropped from each entry.
+    log {
+        output stdout
+        format filter {
+            wrap json
+            fields {
+                request>headers>Authorization delete
+                request>headers>Cookie delete
+                request>headers>Proxy-Authorization delete
+                resp_headers>Set-Cookie delete
+            }
+        }
+    }
+
+    @agent path /v1/invoke /v1/seal/invoke /health
+    handle @agent {
+        reverse_proxy aegis-seal-gateway:8089
+    }
+    handle {
+        respond 404
+    }
 }
 
 {$DOMAIN_TEMPORAL:temporal.localhost} {

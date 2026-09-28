@@ -88,7 +88,7 @@ The `pod-edge` directory contains a Caddy-based reverse proxy for production dep
 |---|---|---|
 | `DOMAIN_API` | `api.localhost` | aegis-core:8088 |
 | `DOMAIN_KEYCLOAK` | `auth.localhost` | aegis-iam:8180 |
-| `DOMAIN_SEAL` | `seal.localhost` | aegis-seal-gateway:8089 |
+| `DOMAIN_SEAL` | `seal.localhost` | aegis-seal-gateway:8089 — `/v1/invoke`, `/v1/seal/invoke` and `/health` only, access-logged without credentials |
 | `DOMAIN_TEMPORAL` | `temporal.localhost` | aegis-temporal:8233 |
 | `DOMAIN_GRAFANA` | `grafana.localhost` | aegis-observability:3300 |
 | `DOMAIN_PROMETHEUS` | `prometheus.localhost` | aegis-observability:9090 |
